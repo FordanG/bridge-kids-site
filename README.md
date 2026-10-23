@@ -47,11 +47,13 @@ The app id, where a page names it, is `com.vendrato.bridgekids`.
 
 The public contact email is [gabrieljohnfordan@gmail.com](mailto:gabrieljohnfordan@gmail.com), the address Gabriel approved. On the pages it is a `mailto:` link. No postal address and no telephone number are included.
 
-Messages to that address are kept only as long as needed to answer them and then deleted. The exact period is still `{{EMAIL_RETENTION_PERIOD}}`, with a TODO for Gabriel. Do not invent a number of days.
+Messages to that address are kept only as long as needed to answer them and are deleted within 90 days after your request is resolved.
+
+**TODO:** retention period pending Gabriel's confirmation.
 
 - `{{POSTAL_ADDRESS_IF_REQUIRED}}` stands in for a postal address, and only if legal review says one must be published.
 
-Each legal page has a **TODO** note next to those placeholders. Do not replace the postal placeholder with a home address or a guessed phone number.
+Each legal page has a **TODO** note next to that postal placeholder. Do not replace it with a home address or a guessed phone number. The 90-day line is marked in an HTML comment with the same confirmation note.
 
 ## How the files are built
 
@@ -82,7 +84,7 @@ Then open `http://127.0.0.1:8080/`. Use only this kind of local preview. Do not 
 - rejects external `href` and `src` values except `https` links to `apps.apple.com` and `itunes.apple.com`, and except `mailto:gabrieljohnfordan@gmail.com`
 - rejects remote CSS and remote SVG references
 - rejects broken internal links and broken fragments
-- requires the draft comment, the translation banner on non-English pages, the approved mailto, the postal-address placeholder, the email-retention placeholder, the ages 3–10 description, and the GitHub Pages log disclosure on the privacy page
+- requires the draft comment, the translation banner on non-English pages, the approved mailto, the postal-address placeholder, the 90-day email-retention line and its confirmation comment, the ages 3–10 description, and the GitHub Pages log disclosure on the privacy page
 - rejects Android, Google, subscription, and in-app-purchase wording in the HTML
 - validates HTML, CSS, and SVG with the Nu Html Checker
 
@@ -94,7 +96,7 @@ Run the same link checks locally with `python3 scripts/check_site.py`.
 
 Do not do this as part of ordinary development, and do not do it from a pull request that he has not approved.
 
-1. Finish legal review. Replace the postal-address placeholder only if counsel says it must be published. Replace `{{EMAIL_RETENTION_PERIOD}}` only with the period Gabriel sets. Add a human translation for a locale only after that translation is reviewed. Confirm the App Store privacy form still matches the text.
+1. Finish legal review. Replace the postal-address placeholder only if counsel says it must be published. Confirm the 90-day email retention line with Gabriel. Add a human translation for a locale only after that translation is reviewed. Confirm the App Store privacy form still matches the text.
 2. Get Gabriel's approving review. Nothing merges to `main` without Gabriel. Branch protection should require his approval and this workflow.
 3. Merge the approved change to `main`.
 4. Only then, a person with admin rights turns on GitHub Pages: **Settings → Pages → Build and deployment → Deploy from a branch → Branch `main` → folder `/ (root)` → Save.**
@@ -112,7 +114,7 @@ This repository holds no secrets and must not gain any. Do not commit an inbox p
 Counsel and Gabriel still need to close these points. The pages describe the product design; they do not certify compliance.
 
 1. **Contact email.** Gabriel approved `gabrieljohnfordan@gmail.com`. It is the address on the pages.
-2. **Email retention.** The pages say a message is kept only as long as needed to answer it and is then deleted. Gabriel still has to replace `{{EMAIL_RETENTION_PERIOD}}` with the exact period. The drafts tell parents not to send a child's personal information and tell the publisher not to build a support database.
+2. **Email retention.** The pages say a message is kept only as long as needed to answer it and is deleted within 90 days after your request is resolved. **TODO:** retention period pending Gabriel's confirmation. The drafts tell parents not to send a child's personal information and tell the publisher not to build a support database.
 3. **Postal address and telephone.** Both are still omitted. COPPA's privacy-policy rule (16 CFR 312.4) generally requires the operator's name, address, telephone number, and email. The email is now published. Counsel has to say whether the address and telephone must still be filled in. `{{POSTAL_ADDRESS_IF_REQUIRED}}` stays a placeholder until that decision. The app is free. Counsel should say whether Japan's Act on Specified Commercial Transactions still requires a public address.
 4. **Publisher.** The drafts name Gabriel John Fordan, an individual developer, and no company. Confirm that no other legal entity should appear on the policy or the store listing.
 5. **Governing law and venue** are not chosen. The terms say so. Consumer-protection forums may have to be named as well.

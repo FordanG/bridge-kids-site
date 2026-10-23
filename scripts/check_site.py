@@ -26,7 +26,8 @@ from site_map import (  # noqa: E402
     CONTACT_ADDRESS,
     CONTACT_MAILTO,
     DRAFT_MARK,
-    EMAIL_RETENTION_PERIOD,
+    EMAIL_RETENTION_LINE,
+    EMAIL_RETENTION_NOTE,
     LEGAL_PAGE_IDS,
     LOCALE_CODES,
     PAGE_IDS,
@@ -302,6 +303,8 @@ def check_contract(root: Path) -> list[str]:
             errors.append(f"{relative}: English page must not say {PENDING_MARK}")
         if "{{CONTACT_EMAIL}}" in text:
             errors.append(f"{relative}: still contains the contact-email placeholder")
+        if "{{EMAIL_RETENTION_PERIOD}}" in text:
+            errors.append(f"{relative}: still contains the email-retention placeholder")
         page_id = Path(relative).stem
         lowered = text.lower()
         for phrase in FORBIDDEN_PHRASES:
@@ -311,17 +314,13 @@ def check_contract(root: Path) -> list[str]:
             if "children aged 3–10" not in text and "children aged 3-10" not in text:
                 errors.append(f"{relative}: must describe the app as for children aged 3–10")
         if locale is not None and page_id in LEGAL_PAGE_IDS:
-            for token in (
-                POSTAL_ADDRESS,
-                "TODO",
-                CONTACT_MAILTO,
-                CONTACT_ADDRESS,
-                EMAIL_RETENTION_PERIOD,
-            ):
+            for token in (POSTAL_ADDRESS, "TODO", CONTACT_MAILTO, CONTACT_ADDRESS):
                 if token not in text:
                     errors.append(f"{relative}: missing {token}")
-            if "kept only as long as needed to answer them and then deleted" not in text:
+            if EMAIL_RETENTION_LINE not in text:
                 errors.append(f"{relative}: missing the email retention line")
+            if f"<!-- {EMAIL_RETENTION_NOTE} -->" not in text:
+                errors.append(f"{relative}: missing the email-retention confirmation comment")
         if page_id == "privacy":
             for snippet in (
                 "GitHub Pages",

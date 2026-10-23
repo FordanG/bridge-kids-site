@@ -10,7 +10,8 @@ from site_map import (
     APP_ID,
     CONTACT_ADDRESS,
     CONTACT_MAILTO,
-    EMAIL_RETENTION_PERIOD,
+    EMAIL_RETENTION_LINE,
+    EMAIL_RETENTION_NOTE,
     POSTAL_ADDRESS,
 )
 
@@ -28,9 +29,9 @@ CONTACT_SECTION = f"""
     <dt>Telephone</dt>
     <dd>Not published in this draft.</dd>
   </dl>
-  <p>Messages to the support address are kept only as long as needed to answer them and then deleted.</p>
+  <!-- {EMAIL_RETENTION_NOTE} -->
+  <p>Messages to the support address are kept only as long as needed to answer them and are {EMAIL_RETENTION_LINE}.</p>
   <div class="todo">
-    <p><strong>TODO:</strong> Gabriel must set the exact period in place of <code>{EMAIL_RETENTION_PERIOD}</code>. Do not invent a number of days.</p>
     <p><strong>TODO:</strong> Replace <code>{POSTAL_ADDRESS}</code> only if legal review says a postal address must be published. Leave the placeholder until then. Do not invent a street address, a post-office box, or a telephone number to fill a gap.</p>
   </div>
 </section>
@@ -155,7 +156,7 @@ PRIVACY_BODY = f"""
     <li>We do not retain personal information on a server. We do not collect it, and we do not run a Bridge Kids server.</li>
     <li>On the device, a profile and its learning record stay until a parent deletes that profile, the app is removed, or the operating system clears the app's storage.</li>
     <li>Microphone audio and recognition text are not kept after the speaking attempt.</li>
-    <li>Messages to the support address, {CONTACT_LINK}, are kept only as long as needed to answer them and then deleted. The exact period is <code>{EMAIL_RETENTION_PERIOD}</code>. They are not copied into an app database. There is no support database.</li>
+    <li>Messages to the support address, {CONTACT_LINK}, are kept only as long as needed to answer them and are {EMAIL_RETENTION_LINE}. They are not copied into an app database. There is no support database.</li>
   </ul>
 </section>
 
@@ -288,7 +289,7 @@ CHILDREN_BODY = f"""
     <li>Recognition text is not retained. It exists in memory only for the match and is then discarded. It is not written to disk.</li>
   </ul>
   <h3>Support messages</h3>
-  <p>Messages to the support address, {CONTACT_LINK}, are kept only as long as needed to answer them and then deleted. The exact period is <code>{EMAIL_RETENTION_PERIOD}</code>. Do not send a child's personal information. The publisher must not copy any such message into an app database. There is nowhere in the product to put it.</p>
+  <p>Messages to the support address, {CONTACT_LINK}, are kept only as long as needed to answer them and are {EMAIL_RETENTION_LINE}. Do not send a child's personal information. The publisher must not copy any such message into an app database. There is nowhere in the product to put it.</p>
   <h3>What this policy does not delete</h3>
   <p>We cannot delete a record held by Apple, and we cannot reach into a device. Device data is deleted by the parent, on the device, as described next.</p>
 </section>
