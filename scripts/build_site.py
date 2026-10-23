@@ -14,6 +14,7 @@ Usage:
 from __future__ import annotations
 
 import html
+import json
 import sys
 from pathlib import Path
 
@@ -35,6 +36,7 @@ from site_map import (  # noqa: E402
 )
 
 ROOT = SCRIPT_DIR.parent
+REVIEW_PATH = ROOT / "review.json"
 
 TITLES = {
     "index": "Bridge Kids – Privacy, support, and terms",
@@ -69,9 +71,38 @@ def esc_attr(value: str) -> str:
     return html.escape(value, quote=True)
 
 
+def release_codes() -> list[str]:
+    """Locales linked at launch. The list lives in review.json."""
+    try:
+        data = json.loads(REVIEW_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(f"review.json: cannot read release_languages ({exc})") from exc
+    codes = data.get("release_languages") if isinstance(data, dict) else None
+    known = {code for code, _native, _english in LOCALES}
+    if (
+        not isinstance(codes, list)
+        or not codes
+        or any(not isinstance(code, str) or code not in known for code in codes)
+        or len(set(codes)) != len(codes)
+        or "en" not in codes
+        or "ja" not in codes
+    ):
+        raise SystemExit(
+            "review.json: release_languages must list known locales and include en and ja"
+        )
+    return codes
+
+
+def release_rows() -> list[tuple[str, str, str]]:
+    """Parent-UI order, limited to the launch languages."""
+    chosen = set(release_codes())
+    return [row for row in LOCALES if row[0] in chosen]
+
+
 def language_nav(page_file: str, current_locale: str | None, from_root: bool) -> str:
     items: list[str] = []
-    for code, native, english in LOCALES:
+    linked = {code for code, _native, _english in release_rows()}
+    for code, native, english in release_rows():
         href = f"{code}/{page_file}" if from_root else f"../{code}/{page_file}"
         current = ' aria-current="true"' if code == current_locale else ""
         gloss = ""
@@ -82,11 +113,19 @@ def language_nav(page_file: str, current_locale: str | None, from_root: bool) ->
             f'<a href="{href}" hreflang="{esc(code)}" lang="{esc(code)}"{current}>'
             f"{esc(native)}{gloss}</a></li>"
         )
+    held = ""
+    if current_locale is not None and current_locale not in linked:
+        held = (
+            "<p>This language is not part of the current release "
+            "and is not linked from the launch pages.</p>"
+        )
     return (
         '<nav class="languages" aria-label="Languages">'
         "<p>Languages</p><ul>"
         + "".join(items)
-        + "</ul></nav>"
+        + "</ul>"
+        + held
+        + "</nav>"
     )
 
 
@@ -123,7 +162,7 @@ def document_list(prefix: str) -> str:
 
 def alternate_links(page_file: str) -> str:
     links = []
-    for code, _native, _english in LOCALES:
+    for code, _native, _english in release_rows():
         links.append(
             f'<link rel="alternate" hreflang="{esc(code)}" href="../{code}/{page_file}">'
         )
@@ -213,8 +252,10 @@ def locale_index_body() -> str:
 def root_index_body() -> str:
     return f"""
 <p>Privacy policy, children's privacy notice, support, and terms for Bridge Kids, an app for children aged 3–10 on iPhone and iPad.</p>
-<p>Choose a language. English is the only text that has been written. Every other language shows that English text with a banner that says a human translation is still waiting. Those pages are not translations, and a browser translation is not one either.</p>
+<p>Choose a language. This release links English and Japanese only. English is the only text that has been written. The Japanese pages repeat that English text with a banner that says a human translation is still waiting. Those pages are not translations, and a browser translation is not one either. The other parent-area languages stay in the repository for a later review and are not linked here.</p>
 {language_nav("index.html", None, True)}
+<h2>Japanese documents</h2>
+{document_list("ja/")}
 <h2>English documents</h2>
 {document_list("en/")}
 <p>Bridge Kids is published by Gabriel John Fordan, an individual developer. The app is free. Email: <a href="{CONTACT_MAILTO}">{esc(CONTACT_ADDRESS)}</a>. The postal address, if one is required, is still a placeholder.</p>
@@ -225,6 +266,8 @@ def not_found_body() -> str:
     return f"""
 <p>That address is not a page on this site. The links below stay inside the site.</p>
 {language_nav("index.html", None, True)}
+<h2>Japanese documents</h2>
+{document_list("ja/")}
 <h2>English documents</h2>
 {document_list("en/")}
 """

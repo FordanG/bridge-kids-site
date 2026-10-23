@@ -24,9 +24,11 @@ Each locale is a folder. Each folder has the same five documents:
 
 Locales, in the parent-UI order from the architecture: `ja`, `en`, `zh-Hans`, `pt-BR`, `fil`, `vi`, `ne`. The language switcher is a row of links. Names are written in each language's own script. There are no flags.
 
+The launch set is English and Japanese (`release_languages` in `review.json`). The language switcher, the root language list, and the `hreflang` links point only at those two. `zh-Hans`, `pt-BR`, `fil`, `vi`, and `ne` stay in the repository so they can be reviewed later. They are not linked from the launch pages. A direct file is still in the repo; it is not part of this release.
+
 `en/` is the source text. Every other locale repeats that English text and shows a **TRANSLATION PENDING** banner. Those pages are not translations. Do not machine-translate them. A reviewed human translation has to replace the English, remove the banner, and set the `lang` attribute on `<html>` (a comment in each non-English file says what to set).
 
-The site root `index.html` is the language list plus links to the English documents. `404.html` is only for a later Pages site.
+The site root `index.html` links the Japanese and English documents. `404.html` is only for a later Pages site.
 
 ## What the drafts say
 
@@ -87,19 +89,21 @@ Then open `http://127.0.0.1:8080/`. Use only this kind of local preview. Do not 
 - requires the draft comment, the translation banner on non-English pages, the approved mailto, the postal-address placeholder, the 90-day email-retention line and its confirmation comment, the ages 3–10 description, and the GitHub Pages log disclosure on the privacy page
 - rejects Android, Google, subscription, and in-app-purchase wording in the HTML
 - validates HTML, CSS, and SVG with the Nu Html Checker
-- recomputes `review.json` source hashes and rejects a missing author, a reviewer who is also the author, a `human_verified` record without a `human:<name>` reviewer, or a hash that does not match the page
+- recomputes `review.json` source hashes and rejects a missing author, a reviewer who is also the author, a reviewer outside the allowed identities, a `human_verified` record without a `human:<name>` reviewer, a launch page that links a locale outside `release_languages`, or a hash that does not match the page
 
 The Nu jar is pinned by SHA-256 to the 12 October 2026 "latest" build (`26.10.12`). If that moving release URL no longer matches the pin, the workflow fails closed until someone updates both.
 
-Run the same link checks locally with `python3 scripts/check_site.py`. Run `python3 scripts/review_check.py` for the review file. That command reports unreviewed pages and does not fail on them. `python3 scripts/review_check.py --release` is the later release gate: unreviewed and flagged pages fail, and privacy, children's privacy, support, and terms pass only when `review_status` is `human_verified`. Legal text is never machine-only for release. `python3 scripts/review_check.py --write` refreshes `source_hash` after a page edit and leaves an existing review untouched.
+Run the same link checks locally with `python3 scripts/check_site.py`. Run `python3 scripts/review_check.py` for the review file. That command reports unreviewed release-language pages and does not fail on them. Locales outside `release_languages` are reported as excluded. `python3 scripts/review_check.py --release` is the later gate, following PRD §12.8. It checks only `en` and `ja`. Unreviewed, flagged, and stale-hash pages in those languages fail. The other five locales are excluded, not failed. English passes as `ai_reviewed` by the author-rule reviewer (`ai-product-lead` is reviewed by `ai-ja-reviewer`, with `ai-qa` as the fallback, or by `human:<name>`; any other author is reviewed by `ai-product-lead` or `human:<name>`) or as `human_verified`. Japanese passes as `ai_reviewed` by `ai-ja-reviewer` when `needs_native_check` is false. When that flag is true, Japanese passes only as `ai_verified` by `ai-ja-reviewer` with `reviewed_at` set, or as `human_verified`. The reviewer is never the author. `--release` also requires Gabriel's Final Review OK in `release/checklist.json`. That one sign-off covers the legal pages. A missing OK fails the release check. It does not fail the default site check. `python3 scripts/review_check.py --write` refreshes `source_hash` after a page edit and leaves an existing review untouched.
 
 ## Content review
 
-`review.json` has one record for each locale page (`ja`, `en`, `zh-Hans`, `pt-BR`, `fil`, `vi`, `ne` × `index`, `privacy`, `children`, `support`, `terms`). Every record starts as `unreviewed`. The author on those starting records is `ai-product-lead`. Non-English pages set `needs_native_check` because the visible text is still the English draft.
+`review.json` has `release_languages` (`["en", "ja"]` for this MVP) and one record for each locale page (`ja`, `en`, `zh-Hans`, `pt-BR`, `fil`, `vi`, `ne` × `index`, `privacy`, `children`, `support`, `terms`). Every record starts as `unreviewed`. The author on those starting records is `ai-product-lead`. Non-English pages set `needs_native_check` because the visible text is still the English draft. The Japanese native check is the AI JA reviewer's second pass (`ai_verified`). A human reviewer is optional.
 
 `source_hash` is `sha256:` plus the hex SHA-256 of the page's visible text. Visible text is the text inside `<body>`, excluding `<script>` and `<style>`. The hash is taken after Unicode NFC, after newlines are LF, and after the ends are trimmed. A content edit has to be followed by `--write` so the committed hash matches.
 
 Allowed authors and reviewers are `ai-product-lead`, `ai-ja-reviewer`, `ai-qa`, `ai-designer`, and `human:<name>`. The reviewer has to be a different identity from the author. `self_verified` does not replace that second person.
+
+`release/checklist.json` records Gabriel's Final Review OK for the site. Until he signs, `final_review_ok` is null. The shape he records is `{"by":"human:gabriel","date":"YYYY-MM-DD","languages":["en","ja"]}`. The languages have to match `release_languages`.
 
 ## Publish later, only after Gabriel approves
 
