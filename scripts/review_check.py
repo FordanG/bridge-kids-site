@@ -49,8 +49,16 @@ ai-product-lead, then ai_verified by ai-ja-reviewer in a later
 session on a date that does not precede that review. That case needs
 allow_ja_self_verified, a matching
 release/ja-review-log.json entry, and the path listed in
-site.self_verified. The flag is "confirm at Final Review". If it is
-false or absent, self_verified true still fails.
+site.self_verified. The same exception applies to one entry in
+self_verified_blocks, and only to that block. The page record stays
+self_verified false and is not listed in site.self_verified. A block
+whose reviewer is its author needs the flag on, the later-session log
+for its page, and page#block_id in site.self_verified_blocks. If the
+flag is false or absent, a self-verified page or that block still
+fails. --release also requires every self_verified_blocks entry in
+that Final Review list. The default run checks each block hash and
+refuses a block whose page is not in the repo. It does not require
+the list.
 
 --write refreshes source_hash. A changed hash resets that page to
 unreviewed. A missing record is added as unreviewed.
@@ -83,11 +91,14 @@ REVIEW_VERSION = 1
 DEFAULT_RELEASE_LANGUAGES = ["en"]
 FINAL_REVIEW_BY = "human:gabriel"
 # allow_ja_self_verified: confirm at Final Review. §12.8 exception (b) only.
-CHECKLIST_SITE_KEYS = frozenset({"final_review_ok", "effective_date", "self_verified"})
+CHECKLIST_SITE_KEYS = frozenset(
+    {"final_review_ok", "effective_date", "self_verified", "self_verified_blocks"}
+)
 PRESERVED_REVIEW_KEYS = (
     "release_languages_note",
     "allow_ja_self_verified",
     "allow_ja_self_verified_note",
+    "self_verified_blocks",
 )
 RELEASE_BLOCKERS = (
     "{{POSTAL_ADDRESS_IF_REQUIRED}}",
@@ -179,6 +190,246 @@ def visible_text(html: str) -> str:
 def source_hash(html: str) -> str:
     digest = hashlib.sha256(visible_text(html).encode("utf-8")).hexdigest()
     return f"sha256:{digest}"
+
+
+BLOCK_RECORD_KEYS = (
+    "path",
+    "block_id",
+    "source_hash",
+    "author",
+    "reviewer",
+    "review_status",
+    "needs_native_check",
+    "final_review_required",
+)
+BLOCK_ID_VALUE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+
+class ReviewBlockText(HTMLParser):
+    """Visible text inside the one element marked data-review-block."""
+
+    def __init__(self, block_id: str) -> None:
+        super().__init__(convert_charrefs=True)
+        self.block_id = block_id
+        self.depth = 0
+        self.found = 0
+        self.parts: list[str] = []
+        self._capturing: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        named = {key: value for key, value in attrs}
+        if self.depth == 0 and named.get("data-review-block") == self.block_id:
+            self.depth = 1
+            self.found += 1
+            self._capturing = []
+        elif self.depth:
+            self.depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if not self.depth:
+            return
+        self.depth -= 1
+        if self.depth == 0 and self.found == 1:
+            self.parts = list(self._capturing)
+
+    def handle_data(self, data: str) -> None:
+        if self.depth:
+            self._capturing.append(data)
+
+
+def block_source_hash(html: str, block_id: str) -> str | None:
+    """sha256 of one review block, or None when that block is missing or repeated."""
+    parser = ReviewBlockText(block_id)
+    parser.feed(html)
+    parser.close()
+    if parser.found != 1:
+        return None
+    text = unicodedata.normalize("NFC", "".join(parser.parts))
+    text = text.replace("\r\n", "\n").replace("\r", "\n").strip()
+    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def page_in_repo(root: Path, relative: str) -> bool:
+    if not isinstance(relative, str) or not relative or relative.startswith(("/", "\\")):
+        return False
+    if "\\" in relative or relative.split("/")[0] in {"", ".", ".."}:
+        return False
+    candidate = (root / relative).resolve()
+    try:
+        candidate.relative_to(root.resolve())
+    except ValueError:
+        return False
+    return candidate.is_file()
+
+
+def block_listing_key(path: str, block_id: str) -> str:
+    return f"{path}#{block_id}"
+
+
+def checklist_block_ids(checklist_file: Path) -> tuple[set[str], list[str]]:
+    """Return site.self_verified_blocks. A missing file or key is an empty list."""
+    if not checklist_file.is_file():
+        return set(), []
+    try:
+        data = json.loads(checklist_file.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return set(), []
+    site = data.get("site") if isinstance(data, dict) else None
+    if not isinstance(site, dict) or "self_verified_blocks" not in site:
+        return set(), []
+    raw = site.get("self_verified_blocks")
+    if not isinstance(raw, list) or any(not isinstance(item, str) for item in raw):
+        return set(), [
+            "release/checklist.json: site.self_verified_blocks must be an array of page#block_id strings"
+        ]
+    errors: list[str] = []
+    for item in raw:
+        page, sep, block_id = item.partition("#")
+        if not sep or not page or not block_id or "#" in block_id:
+            errors.append(
+                "release/checklist.json: site.self_verified_blocks entry "
+                f"{item!r} must be page#block_id"
+            )
+    return set(raw), errors
+
+
+def block_self_verified_exception(
+    block: dict[str, object],
+    *,
+    allowed: bool,
+    log_entries: list,
+    listed: set[str],
+) -> tuple[bool, list[str]]:
+    """§12.8 exception (b) for one block. The page record is not the scope."""
+    path = str(block.get("path") or "")
+    block_id = str(block.get("block_id") or "")
+    label = block_listing_key(path, block_id)
+    if not allowed:
+        return False, [
+            f"{label}: self_verified is not accepted; reviewer must not be the author"
+        ]
+    errors: list[str] = []
+    if not path.startswith("ja/") or block.get("author") != "ai-ja-reviewer":
+        errors.append(
+            f"{label}: self_verified exception is only for a ja block authored by ai-ja-reviewer"
+        )
+    if block.get("review_status") != "ai_verified" or block.get("reviewer") != "ai-ja-reviewer":
+        errors.append(
+            f"{label}: self_verified exception requires a later ai_verified pass by ai-ja-reviewer"
+        )
+    errors.extend(ja_log_errors(path, log_entries))
+    if label not in listed:
+        errors.append(
+            f"{label}: self_verified block must be listed under Final Review "
+            "in release/checklist.json site.self_verified_blocks"
+        )
+    return (not errors), errors
+
+
+def self_verified_block_errors(
+    root: Path,
+    data: object,
+    *,
+    release: bool,
+    allow_ja_self_verified: bool = False,
+    ja_log: list | None = None,
+    checklist_file: Path | None = None,
+    release_languages: list[str] | None = None,
+) -> list[str]:
+    """Check block hashes, page files, the block exception, and the release list."""
+    if not isinstance(data, dict) or "self_verified_blocks" not in data:
+        return []
+    raw = data.get("self_verified_blocks")
+    if not isinstance(raw, list):
+        return ["review.json: self_verified_blocks must be an array"]
+    errors: list[str] = []
+    checklist = checklist_file or (root / "release" / "checklist.json")
+    listed, list_errors = checklist_block_ids(checklist)
+    errors.extend(list_errors)
+    log_entries = ja_log if ja_log is not None else []
+    if ja_log is None and not log_entries:
+        loaded, _log_errors = load_ja_log(root / "release" / "ja-review-log.json")
+        log_entries = loaded
+    seen: set[str] = set()
+    for block in raw:
+        if not isinstance(block, dict):
+            errors.append("a self_verified block is not an object")
+            continue
+        unknown = set(block) - set(BLOCK_RECORD_KEYS)
+        label = str(block.get("path") or "block")
+        for key in sorted(unknown):
+            errors.append(f"{label}: unknown self_verified block field {key}")
+        for key in BLOCK_RECORD_KEYS:
+            if key not in block:
+                errors.append(f"{label}: self_verified block missing {key}")
+        if any(key not in block for key in BLOCK_RECORD_KEYS):
+            continue
+        path = block["path"]
+        block_id = block["block_id"]
+        if not isinstance(path, str) or not isinstance(block_id, str):
+            errors.append(f"{label}: self_verified block path and block_id must be strings")
+            continue
+        label = block_listing_key(path, block_id)
+        if label in seen:
+            errors.append(f"{label}: duplicate self_verified block")
+            continue
+        seen.add(label)
+        if BLOCK_ID_VALUE.fullmatch(block_id) is None:
+            errors.append(f"{label}: block_id must be a lowercase slug")
+        if not page_in_repo(root, path):
+            errors.append(f"{path}: self_verified block page is not in the repo")
+            continue
+        if block["final_review_required"] is not True:
+            errors.append(f"{label}: final_review_required must be true")
+        stated = block["source_hash"]
+        html = (root / path).read_text(encoding="utf-8")
+        actual = block_source_hash(html, block_id)
+        if not isinstance(stated, str) or HASH_VALUE.fullmatch(stated) is None:
+            errors.append(f"{label}: block source_hash must be sha256: and 64 hex digits")
+        elif actual is None:
+            errors.append(f"{label}: review block is missing from the page")
+        elif stated != actual:
+            errors.append(f"{label}: block source_hash is {stated}, recomputed {actual}")
+        author = block["author"]
+        reviewer = block["reviewer"]
+        if not is_identity(author):
+            errors.append(f"{label}: missing author")
+        if reviewer is not None and not is_identity(reviewer):
+            errors.append(f"{label}: reviewer is not an allowed identity")
+        if not isinstance(block["needs_native_check"], bool):
+            errors.append(f"{label}: needs_native_check must be true or false")
+        if block["review_status"] not in STATUSES:
+            errors.append(f"{label}: review_status is not allowed")
+        locale = path.split("/", 1)[0]
+        exception_ok = False
+        if is_identity(author) and author == reviewer:
+            exception_ok, exception_errors = block_self_verified_exception(
+                block,
+                allowed=allow_ja_self_verified,
+                log_entries=log_entries,
+                listed=listed,
+            )
+            errors.extend(exception_errors)
+        elif is_identity(author) and is_identity(reviewer):
+            pairing = pairing_error(locale, author, reviewer)
+            if pairing is not None:
+                errors.append(f"{label}: {pairing}")
+        elif reviewer is None and block["review_status"] != "unreviewed":
+            errors.append(f"{label}: reviewer is required once a block is reviewed")
+        if (
+            release
+            and locale in set(release_languages or [])
+            and block["review_status"] in {"unreviewed", "flagged"}
+        ):
+            errors.append(f"{label}: {block['review_status']} blocks fail release mode")
+        if release and label not in listed and not any(
+            label in item and "site.self_verified_blocks" in item for item in errors
+        ):
+            errors.append(
+                f"{label}: self_verified block must be listed under Final Review "
+                "in release/checklist.json site.self_verified_blocks"
+            )
+    return errors
 
 
 def is_human(value: object) -> bool:
@@ -820,6 +1071,17 @@ def check_tree(
         from check_site import release_text_errors
 
         errors.extend(release_text_errors(root))
+    errors.extend(
+        self_verified_block_errors(
+            root,
+            data,
+            release=release,
+            allow_ja_self_verified=allow_self,
+            ja_log=log_entries,
+            checklist_file=checklist,
+            release_languages=languages,
+        )
+    )
     return errors, notices
 
 
@@ -860,6 +1122,31 @@ def write_review(root: Path, review_file: Path) -> None:
             updated["self_verified"] = False
         updated["source_hash"] = new_hash
         records.append(updated)
+    raw_blocks = extras.get("self_verified_blocks")
+    if isinstance(raw_blocks, list):
+        refreshed_blocks: list[object] = []
+        for block in raw_blocks:
+            if not isinstance(block, dict):
+                refreshed_blocks.append(block)
+                continue
+            updated_block = dict(block)
+            relative = updated_block.get("path")
+            block_id = updated_block.get("block_id")
+            if (
+                isinstance(relative, str)
+                and isinstance(block_id, str)
+                and page_in_repo(root, relative)
+            ):
+                new_block_hash = block_source_hash(
+                    (root / relative).read_text(encoding="utf-8"),
+                    block_id,
+                )
+                if new_block_hash is not None and updated_block.get("source_hash") != new_block_hash:
+                    updated_block["source_hash"] = new_block_hash
+                    updated_block["review_status"] = "unreviewed"
+                    updated_block["reviewer"] = None
+            refreshed_blocks.append(updated_block)
+        extras["self_verified_blocks"] = refreshed_blocks
     payload: dict[str, object] = {
         "version": REVIEW_VERSION,
         "release_languages": languages,
@@ -1014,6 +1301,7 @@ def self_test() -> list[str]:
     if not any("must include en" in item for item in ja_only_errors):
         failures.append(f"release_languages without en should fail, got {ja_only_errors}")
     failures.extend(fixture_self_verified(hello))
+    failures.extend(fixture_self_verified_blocks())
     failures.extend(fixture_publication_banner())
     failures.extend(fixture_hash_reset())
     failures.extend(fixture_release_gate(hello, digest))
@@ -1106,6 +1394,199 @@ def fixture_self_verified(html: str) -> list[str]:
         failures.append(f"matching later-session self_verified ja page should pass, got {errors}")
     if not any(item == "ai-ja-reviewer" for item in (base["author"], base["reviewer"])):
         failures.append("the passing self_verified case must be reviewer==author")
+    return failures
+
+
+def fixture_self_verified_blocks() -> list[str]:
+    """Block hashes, missing pages, the release list, and page self_verified stay false."""
+    failures: list[str] = []
+    notice = (
+        "この日本語版は、英語版をもとにAIで翻訳・確認したものです。"
+        "日本語版と英語版の内容に相違がある場合は、英語版が優先されます。"
+    )
+    block_id = "english-prevails"
+    page_html = (
+        '<html><body><div class="pending" data-review-block="english-prevails">'
+        f"<p>{notice}</p></div><p>Page</p></body></html>"
+    )
+    good_hash = block_source_hash(page_html, block_id)
+    expected = "sha256:e388d19156af38927f17ee49f8703151c1a66607b888263fbcd53fa2d9dbc56f"
+    if good_hash != expected:
+        failures.append(f"notice block hash should be the product lead's digest, got {good_hash}")
+        return failures
+
+    def entry(path: str, digest: str) -> dict[str, object]:
+        return {
+            "path": path,
+            "block_id": block_id,
+            "source_hash": digest,
+            "author": "ai-ja-reviewer",
+            "reviewer": "ai-product-lead",
+            "review_status": "ai_reviewed",
+            "needs_native_check": True,
+            "final_review_required": True,
+        }
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        records: list[dict[str, object]] = []
+        for locale, page_id, relative in expected_pairs():
+            target = root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(page_html, encoding="utf-8")
+            record = blank_record(locale, page_id, relative, page_html)
+            record["self_verified"] = False
+            records.append(record)
+        privacy = next(item for item in records if item["path"] == "ja/privacy.html")
+        blocks = [
+            entry("ja/privacy.html", good_hash),
+            entry("ja/terms.html", "sha256:" + ("ab" * 32)),
+        ]
+        review = {
+            "version": REVIEW_VERSION,
+            "release_languages": ["en"],
+            "allow_ja_self_verified": True,
+            "allow_ja_self_verified_note": "confirm at Final Review",
+            "self_verified_blocks": blocks,
+            "records": records,
+        }
+        review_file = root / "review.json"
+        review_file.write_text(json.dumps(review, indent=2) + "\n", encoding="utf-8")
+        checklist = root / "release" / "checklist.json"
+        checklist.parent.mkdir(parents=True)
+        checklist.write_text(
+            json.dumps(
+                {
+                    "site": {
+                        "final_review_ok": None,
+                        "effective_date": None,
+                        "self_verified": [],
+                        "self_verified_blocks": [],
+                    }
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        def block_errors(
+            *,
+            release: bool,
+            allowed: bool = True,
+            log: list | None = None,
+            release_languages: list[str] | None = None,
+        ) -> list[str]:
+            current = json.loads(review_file.read_text(encoding="utf-8"))
+            return self_verified_block_errors(
+                root,
+                current,
+                release=release,
+                allow_ja_self_verified=allowed,
+                ja_log=log if log is not None else [],
+                checklist_file=checklist,
+                release_languages=release_languages,
+            )
+
+        mismatch = block_errors(release=False)
+        if not any("ja/terms.html#english-prevails: block source_hash" in item for item in mismatch):
+            failures.append(f"a block hash mismatch should fail, got {mismatch}")
+        blocks[1]["source_hash"] = good_hash
+        blocks.append(entry("ja/not-a-page.html", good_hash))
+        review_file.write_text(json.dumps(review, indent=2) + "\n", encoding="utf-8")
+        missing = block_errors(release=False)
+        if not any("ja/not-a-page.html: self_verified block page is not in the repo" in item for item in missing):
+            failures.append(f"a block whose page is not in the repo should fail, got {missing}")
+        del blocks[2]
+        review_file.write_text(json.dumps(review, indent=2) + "\n", encoding="utf-8")
+        unlisted = block_errors(release=True)
+        if not any("site.self_verified_blocks" in item for item in unlisted):
+            failures.append(f"a missing Final Review listing should fail --release, got {unlisted}")
+        draft = block_errors(release=False)
+        if any("site.self_verified_blocks" in item for item in draft):
+            failures.append(f"a missing Final Review listing should not fail draft mode, got {draft}")
+        listed = [
+            "ja/privacy.html#english-prevails",
+            "ja/terms.html#english-prevails",
+        ]
+        ready = {
+            "site": {
+                "final_review_ok": None,
+                "effective_date": None,
+                "self_verified": [],
+                "self_verified_blocks": listed,
+            }
+        }
+        checklist.write_text(json.dumps(ready) + "\n", encoding="utf-8")
+        listed_errors = block_errors(release=True)
+        if listed_errors:
+            failures.append(f"listed blocks with matching hashes should pass, got {listed_errors}")
+        blocks[0]["review_status"] = "flagged"
+        review_file.write_text(json.dumps(review, indent=2) + "\n", encoding="utf-8")
+        held_flagged = block_errors(release=True, release_languages=["en"])
+        if any("flagged blocks fail" in item for item in held_flagged):
+            failures.append(
+                f"a flagged block on a held language should not fail --release, got {held_flagged}"
+            )
+        live_flagged = block_errors(release=True, release_languages=["ja"])
+        if not any("ja/privacy.html#english-prevails: flagged blocks fail" in item for item in live_flagged):
+            failures.append(
+                f"a flagged block in a release language should fail --release, got {live_flagged}"
+            )
+        blocks[0]["review_status"] = "ai_reviewed"
+        review_file.write_text(json.dumps(review, indent=2) + "\n", encoding="utf-8")
+        if privacy["self_verified"] is not False:
+            failures.append("a block entry must not flip its page to self_verified")
+        page_errors, _notices = check_record(
+            privacy,
+            html=page_html,
+            release=True,
+            in_release=False,
+            allow_ja_self_verified=True,
+            self_verified_paths=set(),
+        )
+        if any("self_verified" in item for item in page_errors):
+            failures.append(
+                f"a block entry must not put the page through the page self_verified rule, got {page_errors}"
+            )
+        write_review(root, review_file)
+        written = json.loads(review_file.read_text(encoding="utf-8"))
+        written_page = next(item for item in written["records"] if item["path"] == "ja/privacy.html")
+        if written_page["self_verified"] is not False:
+            failures.append("writing review.json must leave the page self_verified false")
+        if written_page["review_status"] != "unreviewed":
+            failures.append("a block entry must not review the page")
+        log = [
+            {
+                "path": "ja/privacy.html",
+                "author": "ai-ja-reviewer",
+                "ai_reviewed": {
+                    "reviewer": "ai-product-lead",
+                    "date": "2026-10-20",
+                    "session": "first-pass",
+                },
+                "ai_verified": {
+                    "reviewer": "ai-ja-reviewer",
+                    "date": "2026-10-23",
+                    "session": "later-pass",
+                },
+            }
+        ]
+        blocks[0]["reviewer"] = "ai-ja-reviewer"
+        blocks[0]["review_status"] = "ai_verified"
+        review_file.write_text(json.dumps(review, indent=2) + "\n", encoding="utf-8")
+        refused = block_errors(release=True, allowed=False, log=log)
+        if not any("self_verified is not accepted" in item for item in refused):
+            failures.append(f"block exception (b) should fail when the flag is off, got {refused}")
+        accepted = block_errors(release=True, allowed=True, log=log)
+        if accepted:
+            failures.append(
+                "block exception (b) should pass from site.self_verified_blocks "
+                f"without listing the page, got {accepted}"
+            )
+        if "ja/privacy.html" in ready["site"]["self_verified"]:
+            failures.append("the block list must not be stored in site.self_verified")
+        if privacy["self_verified"] is not False:
+            failures.append("the passing block exception must leave the page self_verified false")
     return failures
 
 

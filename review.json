@@ -6,6 +6,238 @@
   "release_languages_note": "ja is re-added when the ai_verified ja copy lands",
   "allow_ja_self_verified": true,
   "allow_ja_self_verified_note": "confirm at Final Review",
+  "self_verified_blocks": [
+    {
+      "path": "ja/privacy.html",
+      "block_id": "english-prevails",
+      "source_hash": "sha256:e388d19156af38927f17ee49f8703151c1a66607b888263fbcd53fa2d9dbc56f",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/privacy.html",
+      "block_id": "short",
+      "source_hash": "sha256:af70e14bafda2c0b6677c78a9bd2ddf0957b5a249882ee09fedccef18f0ff32c",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/privacy.html",
+      "block_id": "app",
+      "source_hash": "sha256:09e50f468e78d2e3bdae4d0222c35980c3d40bb2734557e41442a4dbef7a0574",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/privacy.html",
+      "block_id": "not-collected",
+      "source_hash": "sha256:9319ffd888869f21beb781bd8d8c8f72139ebde78acdbe1b2a3f012e195168a7",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/privacy.html",
+      "block_id": "retention",
+      "source_hash": "sha256:3999953bdf86a1bff9b995b8a61845b7e09b21d50566e141bec6954a445f8ad0",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/privacy.html",
+      "block_id": "diagnostics",
+      "source_hash": "sha256:154122c46f137ed531b8778a24a3678a6dd6b3d315331ae462941edc840dd02c",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/privacy.html",
+      "block_id": "website",
+      "source_hash": "sha256:740ad92cef47da4e1d207be78dcf64d34112bfb7ab309526522eec6953f81c47",
+      "author": "ai-ja-reviewer",
+      "reviewer": null,
+      "review_status": "unreviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/children.html",
+      "block_id": "notice",
+      "source_hash": "sha256:40caf3f13e4a8b9d9e1eb6133f603a36a5899923268d64349d646521692951c8",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/children.html",
+      "block_id": "operator",
+      "source_hash": "sha256:519ada5fc56148ba9a92a422d5721296eeff3b6997579d7e6e932ee985aa6ff3",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/children.html",
+      "block_id": "identifiers",
+      "source_hash": "sha256:b3f25fd69aaa5cb18d05b3bea689cddff9a6054bda826b8729a2bed81e61e811",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "flagged",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/children.html",
+      "block_id": "parents",
+      "source_hash": "sha256:9eef33cc83fc62b94d28bc9d3f03483a344662031ec06ff9a2f61f0023532e6a",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/children.html",
+      "block_id": "retention",
+      "source_hash": "sha256:4c6d2f441d17630c5785ab43250dcaf44aa9d04d2abf03e9e5c585543da81d10",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/children.html",
+      "block_id": "stores",
+      "source_hash": "sha256:895f186c19d6bc8b3657a1b04a1bb1bc3590078a8dbdf292a60345ca747e05a7",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/support.html",
+      "block_id": "no-account",
+      "source_hash": "sha256:9aacb7b9855ddd6cd0c186cff38ef91fa2d9a0df751a9488948fe7ddc89c2b61",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/support.html",
+      "block_id": "gate",
+      "source_hash": "sha256:461ad33d1bdf9ccf6c98fe97b4b6be87c0687833d86e289f205ec84d813598b3",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/support.html",
+      "block_id": "what-to-write",
+      "source_hash": "sha256:cb139fa2ebcc1c778fa09e7e49d72a191657369012f8a0289a94ee2e6d4310cf",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/terms.html",
+      "block_id": "english-prevails",
+      "source_hash": "sha256:e388d19156af38927f17ee49f8703151c1a66607b888263fbcd53fa2d9dbc56f",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/terms.html",
+      "block_id": "draft",
+      "source_hash": "sha256:df0d6625a331e649fd2c1f57c98dcdc9b60885d393d066115e4b2ac777cebd26",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/terms.html",
+      "block_id": "who",
+      "source_hash": "sha256:051ebd1e6e49c4f7d73969b53688ad5368333fb142b0c4d422cfe8c0da22fa43",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/terms.html",
+      "block_id": "agreement",
+      "source_hash": "sha256:63ae60799cb56108981f8c07b532f92a808200d5b1e1c66dd4ecf032cf6c1217",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/terms.html",
+      "block_id": "parents",
+      "source_hash": "sha256:2f2b00f55d7f09432b8ea8f7ab37bf06e0c5a8c5bac7ac4160ce308ff03350f9",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/terms.html",
+      "block_id": "law",
+      "source_hash": "sha256:c0560f749ea2e161299cdd1d67da14c1efbe489c8015c432da2d9ee7949b91e2",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    },
+    {
+      "path": "ja/terms.html",
+      "block_id": "changes",
+      "source_hash": "sha256:d7b4905a6a04681ed03d963741c4859240dee7218d5c49c3a3d0a88a3c6a660c",
+      "author": "ai-ja-reviewer",
+      "reviewer": "ai-product-lead",
+      "review_status": "ai_reviewed",
+      "needs_native_check": true,
+      "final_review_required": true
+    }
+  ],
   "records": [
     {
       "locale": "ja",
@@ -14,11 +246,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "",
+      "notes": "Site ja copy v2.3 (2026-10-23 PHT) from en sha256:ed980be407933e5511c3f47d306e6710dd0fd99ffcf72d4ea02a6bdb9ca11e2e (PR #3 10b33dd). Page record stays unreviewed. Block edited in v2.3, author ai-product-lead, review_status unreviewed, reviewer ai-ja-reviewer pending: main. That block is not on self_verified_blocks.",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:67f896d0a06e971ed63a023d5c6306c9aaff57fe9f025b14455b11431d7bac98"
+      "source_hash": "sha256:83bff3ba2104f920b29d80144212c57ba0c745e03bceb35bc7ef3ad30e8b0711"
     },
     {
       "locale": "ja",
@@ -27,11 +259,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "",
+      "notes": "Site ja copy v2.3 holds privacy ja at v2.2 apart from the website host claim. The sentence names https://bridgekids.vendrato.com and does not name GitHub Pages. ja/privacy.html#website is unreviewed. Page record stays unreviewed. Flagged blocks: #laws (C-03). self_verified_blocks still include english-prevails, short, app, not-collected, retention, diagnostics, and website.",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:61e4668299afed9e5e6524235d0c8b27d39236ff55fdbb085bd74f738f57e8b5"
+      "source_hash": "sha256:93a6fbba9d360f9be09d726e4f64ddf27f5555b304a85986c90a1d8ee8d7ab59"
     },
     {
       "locale": "ja",
@@ -40,11 +272,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "",
+      "notes": "Site ja copy v2.3 (2026-10-23 PHT) from en sha256:c682622761df02d16ca29c657eea7fc3b240b99889d841926fc75e6b9652cdc1 (PR #3 10b33dd). Page record stays unreviewed. Blocks edited in v2.3, author ai-product-lead, review_status unreviewed, reviewer ai-ja-reviewer pending: #directed, #not-collected, #on-device, #deletion. #deletion was removed from self_verified_blocks. Flagged blocks: #identifiers (C-03).",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:6be3e08661f5f7fb9fa61ca7a7ab2b11f65bdc0470a3bac5631edeeababedcb7"
+      "source_hash": "sha256:ef7a6bc69176f14a7b2e5c334be477002eb2af0dd4bef7eb1b61f61c2a647160"
     },
     {
       "locale": "ja",
@@ -53,11 +285,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "",
+      "notes": "Site ja copy v2.3 (2026-10-23 PHT) from en sha256:279c5b92c47cb0740bf2a03bd3da1bd637204c1fb9991126f6b4384427eb8da9 (PR #3 10b33dd). Page record stays unreviewed. Block edited in v2.3, author ai-product-lead, review_status unreviewed, reviewer ai-ja-reviewer pending: #delete. #delete was removed from self_verified_blocks.",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:daedafa504aa3aae516efc0d6ac2db4c7783a0e11f9707c463e0bedb880116a3"
+      "source_hash": "sha256:fe514aa861b5b31e94f59cca6d241977af35f9f023c7fd81477fc64e46e2bcb4"
     },
     {
       "locale": "ja",
@@ -66,11 +298,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "",
+      "notes": "Site ja copy v2.3 (2026-10-23 PHT) from en sha256:f0766b9dd25ef113c9e69d5d2ae08161f8ac9c24ec75e722e99ca9de1e2c5467 (PR #3 10b33dd). Page record stays unreviewed. Block edited in v2.3, author ai-product-lead, review_status unreviewed, reviewer ai-ja-reviewer pending: #privacy (was flagged C-04). Flagged blocks: #apple (C-06), #liability (C-05).",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:99dc6b5d10007f231ea53a6f1013d0b59a6f5d5b545255eba1ff1d1243862892"
+      "source_hash": "sha256:3f570dfec67f3be20f9e0eb94bdaf8a49ff4b76547b18d1cd428cc5793650e0f"
     },
     {
       "locale": "en",
