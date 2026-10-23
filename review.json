@@ -348,7 +348,7 @@
       "review_status": "unreviewed",
       "needs_native_check": false,
       "self_verified": false,
-      "source_hash": "sha256:f16e201134c3ad64f20bb519b7a9547f0e901ea5da39dde9028eacf5c1bbf427"
+      "source_hash": "sha256:665369424eda7e98343aeda6ee68df963cc920a4fe4970463ad92579f3136a99"
     },
     {
       "locale": "en",
@@ -413,7 +413,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:9943d8428bbaf939dc922b71e6be788d078c7f0954df06a85f2ff5ea507ea2cc"
+      "source_hash": "sha256:834582b314a33babef8745e63966c73719889eb6697abebe5bb2c2210b7bc84b"
     },
     {
       "locale": "zh-Hans",
@@ -478,7 +478,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:5392fdad42b3b824a96384b3e24c3b6aaf390648c2b7ec987aa22bdb5a5d96bf"
+      "source_hash": "sha256:b162bfea9f5410ae332d07ae3f2a994a99cff1d797ddb0149727cc71e7970b56"
     },
     {
       "locale": "pt-BR",
@@ -543,7 +543,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:59c645d8e2ac7b43c77b23163c8bedc8b9f676b5e66537789f70c4726de7650b"
+      "source_hash": "sha256:f1ec1b725d1af8c073fbda00dc621bb039f68236e61ee777c4f4e88cfe3f0900"
     },
     {
       "locale": "fil",
@@ -608,7 +608,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:ad9d68d98e4209b155b381ba3d14cba5f20bd240694b9468e5c063c10c247b1e"
+      "source_hash": "sha256:9ba450f84dd044aeee7503a620f4b645020463fe1434a77b3bacc049adc4c564"
     },
     {
       "locale": "vi",
@@ -673,7 +673,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:3d051c943ea4b69621abcebf36e920037873ca870309a80f246f9e931f89e11b"
+      "source_hash": "sha256:92819d36d27cf4fe764971451a2aba3849357b04f503059aadc542dea7b736ae"
     },
     {
       "locale": "ne",

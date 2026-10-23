@@ -149,7 +149,7 @@ PRIVACY_BODY = f"""
 
 <section id="website">
   <h2>This website</h2>
-  <p>The canonical site URL is <a href="{CANONICAL_SITE_URL}/">{CANONICAL_SITE_URL}</a>. The host that serves it is TBD before store release.</p>
+  <p>This website, <a href="{CANONICAL_SITE_URL}/">{CANONICAL_SITE_URL}</a>, is a set of static pages. The host that serves it is TBD before store release.</p>
   <p>These pages are static files. They do not set cookies, they do not run scripts, they do not load fonts or pictures from anyone else, and they do not use analytics. The site host may keep standard server logs, such as IP address and user agent, under its own policy. We do not receive those logs, and we do not use them for tracking. A browser translation of this page is not an official translation. The pages ask browsers not to translate them.</p>
 </section>
 
