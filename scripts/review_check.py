@@ -46,7 +46,8 @@ banners stay. The default run does not apply this word scan.
 reviewer == author fails, except PRD §12.8 exception (b): a ja page
 authored by ai-ja-reviewer, first passed as ai_reviewed by
 ai-product-lead, then ai_verified by ai-ja-reviewer in a later
-session. That case needs allow_ja_self_verified, a matching
+session on a date that does not precede that review. That case needs
+allow_ja_self_verified, a matching
 release/ja-review-log.json entry, and the path listed in
 site.self_verified. The same exception applies to one entry in
 self_verified_blocks, and only to that block. The page record stays
@@ -655,7 +656,18 @@ def ja_log_errors(path: str, entries: list) -> list[str]:
         or reviewed_session == verified_session
     ):
         errors.append(f"{path}: JA Review Log sessions must differ")
+    reviewed_day = _log_day(reviewed.get("date") if isinstance(reviewed, dict) else None)
+    verified_day = _log_day(verified.get("date") if isinstance(verified, dict) else None)
+    if reviewed_day is not None and verified_day is not None and verified_day < reviewed_day:
+        errors.append(f"{path}: JA Review Log ai_verified date must not precede ai_reviewed")
     return errors
+
+
+def _log_day(value: object) -> str | None:
+    """Calendar day of a logged pass. Date-only and datetime values both count."""
+    if not isinstance(value, str) or REVIEWED_AT.fullmatch(value) is None:
+        return None
+    return value[:10]
 
 
 def ja_self_verified_exception(
@@ -1359,6 +1371,18 @@ def fixture_self_verified(html: str) -> list[str]:
     same_session[0]["ai_verified"]["session"] = "first-pass"
     if not any("sessions must differ" in item for item in check(base, log=same_session)):
         failures.append("self_verified should fail when both passes share a session")
+    reversed_dates = json.loads(json.dumps(log))
+    reversed_dates[0]["ai_reviewed"]["date"] = "2026-10-23"
+    reversed_dates[0]["ai_verified"]["date"] = "2026-10-20"
+    if not any("must not precede" in item for item in check(base, log=reversed_dates)):
+        failures.append("self_verified should fail when ai_verified precedes ai_reviewed")
+    if not any("must not precede" in item for item in ja_log_errors("ja/privacy.html", reversed_dates)):
+        failures.append("ja_log_errors should reject a reversed pass order")
+    same_day = json.loads(json.dumps(log))
+    same_day[0]["ai_reviewed"]["date"] = "2026-10-23"
+    same_day[0]["ai_verified"]["date"] = "2026-10-23T18:00:00Z"
+    if any("must not precede" in item for item in check(base, log=same_day)):
+        failures.append("a same-day later session should not fail the pass order")
     if not any("listed under Final Review" in item for item in check(base, listed=set())):
         failures.append("self_verified should fail when the checklist list omits the path")
     errors = check(base)
