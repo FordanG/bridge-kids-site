@@ -1,8 +1,9 @@
-"""Japanese (ja) text for the Bridge Kids legal pages. Site ja copy v2, 2026-10-23 (PHT).
+"""Japanese (ja) text for the Bridge Kids legal pages. Site ja copy v2.3, 2026-10-23 (PHT).
 
 Author: ai-product-lead (AI translation, not human or legal). Mirrors scripts/content.py at
-PR #3 head a2a5bc7. Same section ids, same links, same placeholders. Block-level review
-status is in the Doc "Bridge Kids - Site ja copy v2 (for JA review)"; this file is not ai_verified.
+PR #3 head 10b33dd, except PRIVACY_BODY_JA, which is held at v2.2 (en a2a5bc7) apart from the host claim.
+The website sentence names https://bridgekids.vendrato.com and does not name GitHub Pages. Same section ids, same links, same placeholders. Block-level review
+status is in the Doc "Bridge Kids - Site ja copy v2.3 (for JA review)"; this file is not ai_verified.
 Do not machine-translate or edit these strings outside the ja review flow (PRD §12.8).
 """
 
@@ -160,8 +161,8 @@ PRIVACY_BODY_JA = f"""
 
 <section id="website">
   <h2>このウェブサイトについて</h2>
-  <p>これらのページは静的なファイルです。Cookieを設定せず、スクリプトを実行せず、外部のフォントや画像を読み込まず、アクセス解析も使用していません。ホスティングサービス（GitHub Pages）は、IPアドレスやユーザーエージェントなどの標準的なサーバーログを、独自のポリシーに基づいて保持することがあります。私たちはこれらのログを受け取らず、トラッキングにも使用しません。この下書きをブラウザで自動翻訳したものは、公式の翻訳ではありません。これらのページは、ブラウザに翻訳しないよう求めています。</p>
-  <p>このサイト（{CANONICAL_SITE_URL}）は、GitHub Pagesでホスティングされています。</p>
+  <p>これらのページは静的なファイルです。Cookieを設定せず、スクリプトを実行せず、外部のフォントや画像を読み込まず、アクセス解析も使用していません。ホスティングサービスは、IPアドレスやユーザーエージェントなどの標準的なサーバーログを、独自のポリシーに基づいて保持することがあります。私たちはこれらのログを受け取らず、トラッキングにも使用しません。この下書きをブラウザで自動翻訳したものは、公式の翻訳ではありません。これらのページは、ブラウザに翻訳しないよう求めています。</p>
+  <p>このウェブサイト（{CANONICAL_SITE_URL}）は、静的なページです。これを配信するホストは、ストア公開前は未定（TBD before store release）です。</p>
 </section>
 
 <section id="laws">
@@ -230,14 +231,14 @@ CHILDREN_BODY_JA = f"""
 
 <section id="directed">
   <h2>お子さま向けのアプリであること</h2>
-  <p>Bridge Kidsは、3〜10歳のお子さま向けのアプリです。保護者の方がアプリを設定し、保護者向け画面を使います。お子さまはお子さま向け画面を使います。App Storeでは、Appleの「キッズ」カテゴリの「5歳以下」の区分で提供されます。アプリは3〜10歳のお子さま向けに作られています。</p>
+  <p>Bridge Kidsは、3〜10歳のお子さま向けのアプリです。保護者の方がアプリを設定し、保護者向け画面を使います。お子さまはお子さま向け画面を使います。App Storeでは、Appleの「キッズ」カテゴリに掲載されています。アプリは3〜10歳のお子さま向けに作られています。</p>
   <p>お子さまに、アカウントの作成、メールアドレスの入力、利用規約への同意を求めることはありません。アカウントはありません。アプリの設定は、大人が保護者確認の先で行います。保護者確認では生まれ年を尋ねません。</p>
 </section>
 
 <section id="not-collected">
   <h2>個人情報</h2>
   <p>運営者は、お子さまから個人情報を収集しません。アプリは、プロフィール情報、学習の記録、端末識別子を運営者に送信しません。マイクは使用せず、音声を録音しません。Bridge Kidsのアカウントも、Bridge Kidsのサーバーもありません。</p>
-  <p>アプリは、プロフィールと学習の記録を端末自体に保存することがあります。保護者の方が内容を確認できるよう、次の項目で説明します。これらが私たちに送信されることはありません。端末上のこの保存を、法律上なお「収集」とみなす場合があるかどうかは、リリース前に弁護士が確認すべき事項です。App Storeのプライバシー情報は「データの収集なし」とする予定で、この回答が本お知らせの内容と合っているかを確認する必要があります。</p>
+  <p>アプリは、プロフィールと学習の記録を端末自体に保存することがあります。保護者の方が内容を確認できるよう、次の項目で説明します。これらが私たちに送信されることはありません。端末上のこの保存を、法律上なお「収集」とみなす場合があるかどうかは、リリース前に弁護士が確認すべき事項です。App Storeに表示される本アプリのプライバシー情報は「データの収集なし」です。</p>
 </section>
 
 <section id="on-device">
@@ -246,7 +247,7 @@ CHILDREN_BODY_JA = f"""
   <ul>
     <li>最大4人分のプロフィールについて、ニックネーム、アバター、3〜10歳のお子さまの年齢区分、学習コース、開始日（任意）</li>
     <li>学習の進み具合、覚えたことば・練習中のことばの記録、集めたシール</li>
-    <li>保護者向け画面の設定と、当日の利用時間。設定には、表示言語（日本語または英語）と1日の利用時間の上限（上限は端末ごとに1つ）が含まれます。</li>
+    <li>保護者向け画面の設定と、当日の利用時間。設定には、表示言語（日本語または英語）と1日の利用時間の上限（上限は端末ごとに1つで、すべてのお子さまのプロフィールで共有します）が含まれます。</li>
   </ul>
   <p>学習の進み具合は、保護者向け画面で確認できます。アプリは無料のため、お子さま向け画面に価格は表示されません。</p>
 </section>
@@ -283,7 +284,7 @@ CHILDREN_BODY_JA = f"""
   <h2>削除の方法</h2>
   <ol>
     <li>「おうちの方へ」ボタンを押し、保護者確認を完了して、保護者向け画面を開いてください。</li>
-    <li>保護者向け画面で、お子さまのプロフィールを削除してください（メニューの名称は、リリースまでに変わる可能性があります）。プロフィールを削除すると、そのプロフィールのニックネーム、アバター、年齢区分、学習コース、開始日、学習の記録が端末から削除されます。</li>
+    <li>保護者向け画面で、お子さまのプロフィールを削除してください。プロフィールを削除すると、そのプロフィールのニックネーム、アバター、年齢区分、学習コース、開始日、学習の記録が端末から削除されます。</li>
     <li>または、端末からアプリを削除してください。その端末のすべてのプロフィールを含め、アプリ内のデータが削除されます。</li>
   </ol>
   <p>保護者向け画面での操作手順は、<a href="support.html">サポートページ</a>に記載しています。</p>
@@ -328,7 +329,7 @@ SUPPORT_BODY_JA = f"""
     <li>お子さまのホーム画面または進み具合のマップにある「おうちの方へ」ボタンを押し、保護者確認を完了してください。</li>
     <li>保護者向け画面で、削除したいプロフィールを削除してください。</li>
   </ol>
-  <p>メニューの名称は、リリースまでに変わる可能性があります。削除すると、そのプロフィールのニックネーム、アバター、年齢区分、学習コース、開始日（任意）、学習の記録が端末から削除されます。アプリ全体を削除すると、その端末のすべてのプロフィールのデータが削除されます。</p>
+  <p>削除すると、そのプロフィールのニックネーム、アバター、年齢区分、学習コース、開始日（任意）、学習の記録が端末から削除されます。アプリ全体を削除すると、その端末のすべてのプロフィールのデータが削除されます。</p>
 </section>
 
 <section id="offline">
@@ -430,7 +431,7 @@ TERMS_BODY_JA = f"""
 
 <section id="privacy">
   <h2>プライバシー</h2>
-  <p><a href="privacy.html">プライバシーポリシー</a>と<a href="children.html">「お子さまのプライバシーに関するお知らせ（COPPA）」</a>では、端末から外部に送信される情報がいかに少ないかを説明しています。これらにはデータの保存に関する方針も含まれます。これらの文書が効力を生じた後にアプリを使用された場合、保護者の方はそれらを確認する機会があったものとします。アプリは、お子さまの情報を私たちに送信しない設計です。</p>
+  <p><a href="privacy.html">プライバシーポリシー</a>と<a href="children.html">「お子さまのプライバシーに関するお知らせ（COPPA）」</a>では、お子さまのデータが端末から外部に送信されないことを説明しています。これらにはデータの保存に関する方針も含まれます。これらの文書が効力を生じた後にアプリを使用された場合、保護者の方はそれらを確認する機会があったものとします。アプリは、お子さまの情報を私たちに送信しない設計です。</p>
 </section>
 
 <section id="use">
@@ -471,7 +472,7 @@ INDEX_BODY_JA = f"""
 <li><a href="privacy.html">プライバシーポリシー</a>：アプリが扱う情報と、収集しない情報について。</li>
 <li><a href="children.html">お子さまのプライバシーに関するお知らせ（COPPA）</a>：データの保存に関する方針を含みます。</li>
 <li><a href="support.html">サポート</a>：プロフィールの削除、バックアップ、お問い合わせについて。</li>
-<li><a href="terms.html">利用規約</a>：使用許諾とApp Storeに関する条件の下書きです。</li>
+<li><a href="terms.html">利用規約</a>：使用許諾とApp Storeに関する条件です。</li>
 </ul>
 <p>メール：{CONTACT_LINK}　郵送先の住所（必要な場合）は確認中のため、<a href="support.html">サポートページ</a>では仮の表示としています。</p>
 """
@@ -545,6 +546,5 @@ LOCALE_PHRASES_JA: tuple[tuple[str, frozenset[str]], ...] = (
     (EMAIL_RETENTION_LINE_JA, frozenset({"privacy", "children", "support", "terms"})),
     ("IPアドレス", frozenset({"privacy"})),
     ("ユーザーエージェント", frozenset({"privacy"})),
-    ("GitHub Pages", frozenset({"privacy"})),
     ("トラッキングにも使用しません", frozenset({"privacy"})),
 )

@@ -70,7 +70,7 @@
     {
       "path": "ja/privacy.html",
       "block_id": "website",
-      "source_hash": "sha256:7c16d6eabe476be7434745c6bfcbaf574f6cc7eca208c741cae70159d6c32b58",
+      "source_hash": "sha256:740ad92cef47da4e1d207be78dcf64d34112bfb7ab309526522eec6953f81c47",
       "author": "ai-ja-reviewer",
       "reviewer": null,
       "review_status": "unreviewed",
@@ -129,16 +129,6 @@
     },
     {
       "path": "ja/children.html",
-      "block_id": "deletion",
-      "source_hash": "sha256:b8bed2a3c784516dcdb9bbfd92dec3f6e5d6793918e29470fb8991225ae04f3e",
-      "author": "ai-ja-reviewer",
-      "reviewer": "ai-product-lead",
-      "review_status": "ai_reviewed",
-      "needs_native_check": true,
-      "final_review_required": true
-    },
-    {
-      "path": "ja/children.html",
       "block_id": "stores",
       "source_hash": "sha256:895f186c19d6bc8b3657a1b04a1bb1bc3590078a8dbdf292a60345ca747e05a7",
       "author": "ai-ja-reviewer",
@@ -161,16 +151,6 @@
       "path": "ja/support.html",
       "block_id": "gate",
       "source_hash": "sha256:461ad33d1bdf9ccf6c98fe97b4b6be87c0687833d86e289f205ec84d813598b3",
-      "author": "ai-ja-reviewer",
-      "reviewer": "ai-product-lead",
-      "review_status": "ai_reviewed",
-      "needs_native_check": true,
-      "final_review_required": true
-    },
-    {
-      "path": "ja/support.html",
-      "block_id": "delete",
-      "source_hash": "sha256:a4e7b8a8440494a2c0770a6920bc6f964be95db341a89a906c42790a7f1e4491",
       "author": "ai-ja-reviewer",
       "reviewer": "ai-product-lead",
       "review_status": "ai_reviewed",
@@ -266,11 +246,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "Site ja copy v2.2 (2026-10-23 PHT) from en sha256:33b0095b1dd526fa72aaddea5084c23cb67b0820059c4467bbce7e213c5839ab (PR #3 a2a5bc7). Page record stays unreviewed: the built page has no ai_verified pass yet; block statuses (all blocks ai_reviewed or flagged after JA review 2) are in the Doc.",
+      "notes": "Site ja copy v2.3 (2026-10-23 PHT) from en sha256:ed980be407933e5511c3f47d306e6710dd0fd99ffcf72d4ea02a6bdb9ca11e2e (PR #3 10b33dd). Page record stays unreviewed. Block edited in v2.3, author ai-product-lead, review_status unreviewed, reviewer ai-ja-reviewer pending: main. That block is not on self_verified_blocks.",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:567d5427b3ea4b0cf3eef24910afb65f23cc9797ccd910e52b2cb3896a68b4b2"
+      "source_hash": "sha256:83bff3ba2104f920b29d80144212c57ba0c745e03bceb35bc7ef3ad30e8b0711"
     },
     {
       "locale": "ja",
@@ -279,11 +259,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "Site ja copy v2.2 (2026-10-23 PHT) from en sha256:aae118f47ee7c4cd63e95fa6b5e25cbedf5d784a81e8f70a9a2bff04b1bfb95c (PR #3 a2a5bc7). Page record stays unreviewed: the built page has no ai_verified pass yet; block statuses (all blocks ai_reviewed or flagged after JA review 2) are in the Doc. Flagged blocks: #laws (C-03). Block-level self_verified_blocks (§12.8 exception (b), see self_verified.ja.proposed.json): english-prevails, short, app, not-collected, retention, diagnostics, website (author ai-ja-reviewer, reviewer ai-product-lead, nnc=true, final_review_required); page-level self_verified stays false until an ai_verified pass and a ja-review-log entry exist.",
+      "notes": "Site ja copy v2.3 holds privacy ja at v2.2 apart from the website host claim. The sentence names https://bridgekids.vendrato.com and does not name GitHub Pages. ja/privacy.html#website is unreviewed. Page record stays unreviewed. Flagged blocks: #laws (C-03). self_verified_blocks still include english-prevails, short, app, not-collected, retention, diagnostics, and website.",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:e51c5b3ac2d427065d32c29b1b31a5658649f1a62f9dd900f1a83212ec615aef"
+      "source_hash": "sha256:93a6fbba9d360f9be09d726e4f64ddf27f5555b304a85986c90a1d8ee8d7ab59"
     },
     {
       "locale": "ja",
@@ -292,11 +272,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "Site ja copy v2.2 (2026-10-23 PHT) from en sha256:0f5518ce824735030272898e9f5a0da2acb0e44ea77639b6533b8eb586e6d708 (PR #3 a2a5bc7). Page record stays unreviewed: the built page has no ai_verified pass yet; block statuses (all blocks ai_reviewed or flagged after JA review 2) are in the Doc. Flagged blocks: #identifiers (C-03). Block-level self_verified_blocks (§12.8 exception (b), see self_verified.ja.proposed.json): notice, operator, identifiers, parents, retention, deletion, stores (author ai-ja-reviewer, reviewer ai-product-lead, nnc=true, final_review_required).",
+      "notes": "Site ja copy v2.3 (2026-10-23 PHT) from en sha256:c682622761df02d16ca29c657eea7fc3b240b99889d841926fc75e6b9652cdc1 (PR #3 10b33dd). Page record stays unreviewed. Blocks edited in v2.3, author ai-product-lead, review_status unreviewed, reviewer ai-ja-reviewer pending: #directed, #not-collected, #on-device, #deletion. #deletion was removed from self_verified_blocks. Flagged blocks: #identifiers (C-03).",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:c9fe44d37074e0d193bd721f88276156a75fb29afddb16b89d3b0e120cf5962d"
+      "source_hash": "sha256:ef7a6bc69176f14a7b2e5c334be477002eb2af0dd4bef7eb1b61f61c2a647160"
     },
     {
       "locale": "ja",
@@ -305,11 +285,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "Site ja copy v2.2 (2026-10-23 PHT) from en sha256:a420c9a3cd1b8399cff26b8e04e3180cd7e9bbf23bbe6d8296982d1029dd414a (PR #3 a2a5bc7). Page record stays unreviewed: the built page has no ai_verified pass yet; block statuses (all blocks ai_reviewed or flagged after JA review 2) are in the Doc. Block-level self_verified_blocks (§12.8 exception (b), see self_verified.ja.proposed.json): no-account, gate, delete, what-to-write (author ai-ja-reviewer, reviewer ai-product-lead, nnc=true, final_review_required).",
+      "notes": "Site ja copy v2.3 (2026-10-23 PHT) from en sha256:279c5b92c47cb0740bf2a03bd3da1bd637204c1fb9991126f6b4384427eb8da9 (PR #3 10b33dd). Page record stays unreviewed. Block edited in v2.3, author ai-product-lead, review_status unreviewed, reviewer ai-ja-reviewer pending: #delete. #delete was removed from self_verified_blocks.",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:81b41563fe6cb08b9a6b65a02087f0010e8d7f4b831fa5b90273f2ed157cdd4d"
+      "source_hash": "sha256:fe514aa861b5b31e94f59cca6d241977af35f9f023c7fd81477fc64e46e2bcb4"
     },
     {
       "locale": "ja",
@@ -318,11 +298,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "Site ja copy v2.2 (2026-10-23 PHT) from en sha256:9efe8fd443833388d119fcd55d8f72e9a8feca66e5eef9b78c17ee07f78bc548 (PR #3 a2a5bc7). Page record stays unreviewed: the built page has no ai_verified pass yet; block statuses (all blocks ai_reviewed or flagged after JA review 2) are in the Doc. Flagged blocks: #apple (C-06), #privacy (C-04), #liability (C-05). Block-level self_verified_blocks (§12.8 exception (b), see self_verified.ja.proposed.json): english-prevails, draft, who, agreement, parents, law, changes (author ai-ja-reviewer, reviewer ai-product-lead, nnc=true, final_review_required); page-level self_verified stays false until an ai_verified pass and a ja-review-log entry exist.",
+      "notes": "Site ja copy v2.3 (2026-10-23 PHT) from en sha256:f0766b9dd25ef113c9e69d5d2ae08161f8ac9c24ec75e722e99ca9de1e2c5467 (PR #3 10b33dd). Page record stays unreviewed. Block edited in v2.3, author ai-product-lead, review_status unreviewed, reviewer ai-ja-reviewer pending: #privacy (was flagged C-04). Flagged blocks: #apple (C-06), #liability (C-05).",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:971d85e2bd7a0ab135532bb699d76e05ba6b5cacb581ab68d37d5e6e98497b02"
+      "source_hash": "sha256:3f570dfec67f3be20f9e0eb94bdaf8a49ff4b76547b18d1cd428cc5793650e0f"
     },
     {
       "locale": "en",
