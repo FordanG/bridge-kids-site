@@ -57,7 +57,7 @@ DOCUMENTS = (
         "Support",
         "Delete a profile, understand speech and backups, and contact the publisher.",
     ),
-    ("terms.html", "Terms of use", "The draft license and store terms. Purchases are not offered at launch."),
+    ("terms.html", "Terms of use", "The draft license and App Store terms."),
 )
 
 
@@ -202,8 +202,8 @@ def page(
 
 def locale_index_body() -> str:
     return f"""
-<p>Privacy policy, children's privacy notice, support, and terms for the Bridge Kids English-learning apps on iPhone, iPad, and Android.</p>
-<p>Bridge Kids is published by Gabriel John Fordan, an individual developer. The app is designed not to collect personal information, not to use accounts or telemetry, and not to send a child's voice off the device. Speech recognition stays on the device. In-app purchases are not offered at launch. Profiles are excluded from backups.</p>
+<p>Privacy policy, children's privacy notice, support, and terms for Bridge Kids, an app for children aged 3–10 on iPhone and iPad.</p>
+<p>Bridge Kids is published by Gabriel John Fordan, an individual developer. The app is free. It is designed not to collect personal information, not to use accounts or telemetry, and not to send a child's voice off the device. Speech recognition stays on the device. Profiles are excluded from iOS backup.</p>
 <h2>Documents</h2>
 {document_list("")}
 <p>Email: <a href="{CONTACT_MAILTO}">{esc(CONTACT_ADDRESS)}</a>. The postal address, if one is required, is still a placeholder on the <a href="support.html">support page</a>.</p>
@@ -212,12 +212,12 @@ def locale_index_body() -> str:
 
 def root_index_body() -> str:
     return f"""
-<p>Privacy policy, children's privacy notice, support, and terms for the Bridge Kids English-learning apps on iPhone, iPad, and Android.</p>
+<p>Privacy policy, children's privacy notice, support, and terms for Bridge Kids, an app for children aged 3–10 on iPhone and iPad.</p>
 <p>Choose a language. English is the only text that has been written. Every other language shows that English text with a banner that says a human translation is still waiting. Those pages are not translations, and a browser translation is not one either.</p>
 {language_nav("index.html", None, True)}
 <h2>English documents</h2>
 {document_list("en/")}
-<p>Bridge Kids is published by Gabriel John Fordan, an individual developer. Email: <a href="{CONTACT_MAILTO}">{esc(CONTACT_ADDRESS)}</a>. The postal address, if one is required, is still a placeholder.</p>
+<p>Bridge Kids is published by Gabriel John Fordan, an individual developer. The app is free. Email: <a href="{CONTACT_MAILTO}">{esc(CONTACT_ADDRESS)}</a>. The postal address, if one is required, is still a placeholder.</p>
 """
 
 

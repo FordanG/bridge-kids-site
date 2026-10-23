@@ -48,7 +48,7 @@
     <li><a href="#parents">Parents' rights</a></li>
     <li><a href="#retention">Data retention policy</a></li>
     <li><a href="#deletion">How to delete</a></li>
-    <li><a href="#stores">Apple and Google</a></li>
+    <li><a href="#stores">Apple</a></li>
     <li><a href="#contact">Contact</a></li>
   </ol>
 </nav>
@@ -66,43 +66,43 @@
 
 <section id="directed">
   <h2>Directed to children</h2>
-  <p>Bridge Kids is directed to children. A parent or guardian sets it up and uses the parent area. The child uses the child area. The in-app age bands are about 3 to 5 and about 6 to 10. Store age categories use the stores' own labels and are not final in this draft.</p>
+  <p>Bridge Kids is an app for children aged 3–10. A parent or guardian sets it up and uses the parent area. The child uses the child area. The App Store age category uses Apple's own label and is not final in this draft.</p>
   <p>The child is not asked to create an account, to type an email address, or to accept these terms. A grown-up does that, behind a parental gate. The gate does not ask for a birth year.</p>
 </section>
 
 <section id="not-collected">
   <h2>Personal information</h2>
   <p>The operator does not collect personal information from children. The app does not send profile information, learning records, audio, or device identifiers to the operator. There is no Bridge Kids account and no Bridge Kids server.</p>
-  <p>The app can store a profile and a learning record on the device itself. That information is described in the next section so a parent can see it. It is not transmitted to us. Whether any law still treats that on-device storage as "collection" is a question for counsel before release. The store privacy forms are planned as "Data Not Collected" on the App Store and "No data collected" and "No data shared" on Google Play, and those answers have to be checked against this disclosure.</p>
+  <p>The app can store a profile and a learning record on the device itself. That information is described in the next section so a parent can see it. It is not transmitted to us. Whether any law still treats that on-device storage as "collection" is a question for counsel before release. The App Store privacy form is planned as "Data Not Collected," and that answer has to be checked against this disclosure.</p>
 </section>
 
 <section id="on-device">
   <h2>On the device</h2>
   <p>Private storage on the device can hold:</p>
   <ul>
-    <li>a nickname, an avatar, an age band, a learning direction, and an optional start date, for up to four profiles</li>
+    <li>a nickname, an avatar, an age band for a child aged 3–10, a learning direction, and an optional start date, for up to four profiles</li>
     <li>progress, the on-device learning model, smileys, and speaking attempts</li>
     <li>parent-area settings, including language</li>
   </ul>
-  <p>A parent can see progress in the parent area. The child area does not show prices.</p>
+  <p>A parent can see progress in the parent area. The app is free, so the child area does not show a price.</p>
 </section>
 
 <section id="speech">
   <h2>Microphone</h2>
   <p>If a parent allows the microphone, the child can try speaking. Audio stays in memory on the device for that attempt. It is not stored, not sent to the operator, and not sent to an advertising network. Recognition text, if the device creates any, is discarded when the attempt is judged. If the device cannot do on-device recognition, the app only marks that the child tried, still on the device.</p>
-  <p>The app does not use a cloud speech recognizer. A speech model may be downloaded by the operating system from Apple or Google. That is a store or system download, not a Bridge Kids upload of the child's voice.</p>
+  <p>The app does not use a cloud speech recognizer. A speech model may be downloaded by iOS from Apple. That is a system download, not a Bridge Kids upload of the child's voice.</p>
 </section>
 
 <section id="identifiers">
   <h2>Identifiers</h2>
-  <p>The app does not read the advertising identifier on iOS or Android, does not read the identifier for vendors, and does not use a tracking SDK. The Android advertising-ID permission is not part of the app. COPPA treats persistent identifiers as personal information. The design does not collect them for the operator.</p>
+  <p>The app does not read the advertising identifier, does not read the identifier for vendors, and does not use a tracking SDK. COPPA treats persistent identifiers as personal information. The design does not collect them for the operator.</p>
 </section>
 
 <section id="parents">
   <h2>Parents' rights</h2>
   <p>A parent can refuse to let the child use the app, refuse the microphone, and still use listen-and-tap. A parent can review what the app stores by looking at the parent area on the device: we cannot show a remote copy, because we do not have one. A parent can delete a profile on the device, or delete the app.</p>
   <p>A parent can refuse future collection. There is no collection by the operator to turn off. There is also no account to close.</p>
-  <p>A parent may write to <a href="mailto:gabrieljohnfordan@gmail.com">gabrieljohnfordan@gmail.com</a> to ask what we hold. Do not include a child's full name, exact birth date, photograph, or voice recording. We do not need them to answer. The answer the design allows is that we hold nothing about the child.</p>
+  <p>A parent may write to <a href="mailto:gabrieljohnfordan@gmail.com">gabrieljohnfordan@gmail.com</a> to ask what we hold. Do not include a child's full name, exact birth date, photograph, or voice recording. We do not need them to answer. The answer the design allows is that we do not hold the child's information.</p>
 </section>
 
 <section id="retention">
@@ -113,15 +113,14 @@
   <h3>On the device</h3>
   <ul>
     <li>A profile and its learning record remain until the parent deletes that profile, the app is uninstalled, or the operating system deletes the app's storage, whichever comes first.</li>
-    <li>The app excludes that data from operating-system backups and from Android device-to-device transfer. It is not retained by the app in iCloud or in Google backup, and it is not copied onto a new device.</li>
+    <li>The app excludes that data from iOS backup. It is not retained in iCloud, and it is not copied onto a new device.</li>
     <li>Microphone audio is not retained. It exists in memory during the attempt and is then discarded. It is not written to disk.</li>
     <li>Recognition text is not retained. It exists in memory only for the match and is then discarded. It is not written to disk.</li>
-    <li>In-app purchases are not offered at launch, so the app does not keep a subscription note or a payment record.</li>
   </ul>
   <h3>Support messages</h3>
-  <p>Parents can write to <a href="mailto:gabrieljohnfordan@gmail.com">gabrieljohnfordan@gmail.com</a>. Do not send a child's personal information. The publisher must not copy any such message into an app database. There is nowhere in the product to put it. How long an ordinary email may remain in the publisher's mailbox is not decided. Legal review has to set that period. Do not send children's information.</p>
+  <p>Messages to the support address, <a href="mailto:gabrieljohnfordan@gmail.com">gabrieljohnfordan@gmail.com</a>, are kept only as long as needed to answer them and then deleted. The exact period is <code>{{EMAIL_RETENTION_PERIOD}}</code>. Do not send a child's personal information. The publisher must not copy any such message into an app database. There is nowhere in the product to put it.</p>
   <h3>What this policy does not delete</h3>
-  <p>We cannot delete a record held by Apple or Google, and we cannot reach into a device. If purchases are added later, they go through the App Store, and that store's records follow the store's privacy policy. Device data is deleted by the parent, on the device, as described next.</p>
+  <p>We cannot delete a record held by Apple, and we cannot reach into a device. Device data is deleted by the parent, on the device, as described next.</p>
 </section>
 
 <section id="deletion">
@@ -131,13 +130,13 @@
     <li>Delete the child profile. The labels in the app can still change before release. The action is profile deletion in the parent area. Deleting a profile removes that profile's nickname, avatar, age band, direction, start date, and learning record from the device.</li>
     <li>Or remove the app from the device. That removes the app's local data, including every profile on that device.</li>
   </ol>
-  <p>Steps for the parent area are on the <a href="support.html">support page</a>. Purchases are not offered at launch, so there is no subscription to cancel.</p>
+  <p>Steps for the parent area are on the <a href="support.html">support page</a>.</p>
   <p>We cannot perform this deletion for you, because we never receive the profile. That limit is a result of not collecting the data.</p>
 </section>
 
 <section id="stores">
-  <h2>Apple and Google</h2>
-  <p>Apple and Google process downloads and optional diagnostics under their own policies. Purchases are not offered at launch. If purchases are added later, they go through the App Store. We do not receive the child's profile from the stores. We do not allow a third-party advertising or analytics SDK to receive it either. Nothing in this notice authorizes a third party to collect personal information from a child through Bridge Kids.</p>
+  <h2>Apple</h2>
+  <p>Apple processes downloads and optional diagnostics under its own policies. We do not receive the child's profile from Apple. We do not allow a third-party advertising or analytics SDK to receive it either. Nothing in this notice authorizes a third party to collect personal information from a child through Bridge Kids.</p>
 </section>
 
 <section id="contact">
@@ -151,7 +150,9 @@
     <dt>Telephone</dt>
     <dd>Not published in this draft.</dd>
   </dl>
+  <p>Messages to the support address are kept only as long as needed to answer them and then deleted.</p>
   <div class="todo">
+    <p><strong>TODO:</strong> Gabriel must set the exact period in place of <code>{{EMAIL_RETENTION_PERIOD}}</code>. Do not invent a number of days.</p>
     <p><strong>TODO:</strong> Replace <code>{{POSTAL_ADDRESS_IF_REQUIRED}}</code> only if legal review says a postal address must be published. Leave the placeholder until then. Do not invent a street address, a post-office box, or a telephone number to fill a gap.</p>
   </div>
 </section>

@@ -41,6 +41,7 @@ CONTACT_ADDRESS = "gabrieljohnfordan@gmail.com"
 CONTACT_MAILTO = "mailto:gabrieljohnfordan@gmail.com"
 APP_ID = "com.vendrato.bridgekids"
 POSTAL_ADDRESS = "{{POSTAL_ADDRESS_IF_REQUIRED}}"
+EMAIL_RETENTION_PERIOD = "{{EMAIL_RETENTION_PERIOD}}"
 UPDATED = "2026-10-23"
 UPDATED_LABEL = "23 October 2026"
 

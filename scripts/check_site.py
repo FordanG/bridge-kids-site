@@ -3,9 +3,9 @@
 
 Fails if any HTML or SVG file contains a script, if a stylesheet or
 document loads a third-party URL, if an href or src leaves the site
-for anything other than an Apple or Google app-store link or the
-approved mailto address, if HTML links or fragments are broken, or if
-the locale contract is wrong.
+for anything other than an Apple app-store link or the approved
+mailto address, if HTML links or fragments are broken, or if the
+locale contract is wrong.
 
 Valid HTML is checked separately with the Nu Html Checker in CI.
 """
@@ -26,6 +26,7 @@ from site_map import (  # noqa: E402
     CONTACT_ADDRESS,
     CONTACT_MAILTO,
     DRAFT_MARK,
+    EMAIL_RETENTION_PERIOD,
     LEGAL_PAGE_IDS,
     LOCALE_CODES,
     PAGE_IDS,
@@ -36,8 +37,16 @@ from site_map import (  # noqa: E402
 
 ROOT = SCRIPT_DIR.parent
 
-ALLOWED_STORE_HOSTS = frozenset(
-    {"apps.apple.com", "itunes.apple.com", "play.google.com"}
+ALLOWED_STORE_HOSTS = frozenset({"apps.apple.com", "itunes.apple.com"})
+FORBIDDEN_PHRASES = (
+    "subscription",
+    "in-app purchase",
+    "android",
+    "google play",
+    "google",
+    "english-learning",
+    "about 3",
+    "7 languages",
 )
 BANNED_TAGS = frozenset(
     {"script", "iframe", "object", "embed", "applet", "base", "form"}
@@ -294,13 +303,34 @@ def check_contract(root: Path) -> list[str]:
         if "{{CONTACT_EMAIL}}" in text:
             errors.append(f"{relative}: still contains the contact-email placeholder")
         page_id = Path(relative).stem
+        lowered = text.lower()
+        for phrase in FORBIDDEN_PHRASES:
+            if phrase in lowered:
+                errors.append(f"{relative}: contains {phrase!r}")
+        if page_id in {"index", "privacy", "children", "support", "terms"}:
+            if "children aged 3–10" not in text and "children aged 3-10" not in text:
+                errors.append(f"{relative}: must describe the app as for children aged 3–10")
         if locale is not None and page_id in LEGAL_PAGE_IDS:
-            for token in (POSTAL_ADDRESS, "TODO", CONTACT_MAILTO, CONTACT_ADDRESS):
+            for token in (
+                POSTAL_ADDRESS,
+                "TODO",
+                CONTACT_MAILTO,
+                CONTACT_ADDRESS,
+                EMAIL_RETENTION_PERIOD,
+            ):
                 if token not in text:
                     errors.append(f"{relative}: missing {token}")
-        if locale is not None and page_id in {"privacy", "terms", "support"}:
-            if "Not offered at launch" not in text:
-                errors.append(f"{relative}: purchases must be marked not offered at launch")
+            if "kept only as long as needed to answer them and then deleted" not in text:
+                errors.append(f"{relative}: missing the email retention line")
+        if page_id == "privacy":
+            for snippet in (
+                "GitHub Pages",
+                "IP address",
+                "user agent",
+                "do not use them for tracking",
+            ):
+                if snippet not in text:
+                    errors.append(f"{relative}: missing the host-log disclosure ({snippet})")
     return errors
 
 
@@ -339,7 +369,6 @@ def self_test() -> list[str]:
 <html><head><title>Ok</title><link rel="stylesheet" href="site.css"></head>
 <body><p id="ok">Hi</p><a href="#ok">Here</a>
 <a href="https://apps.apple.com/account/subscriptions">Apple</a>
-<a href="https://play.google.com/store/account/subscriptions">Google</a>
 <a href="mailto:gabrieljohnfordan@gmail.com">gabrieljohnfordan@gmail.com</a>
 </body></html>
 """
@@ -348,6 +377,11 @@ def self_test() -> list[str]:
         "script tag",
         "<!DOCTYPE html><html><body><script>bad()</script></body></html>",
         "script tag",
+    )
+    expect(
+        "google play link",
+        '<!DOCTYPE html><html><body><a href="https://play.google.com/store/apps">x</a></body></html>',
+        "not an app-store link",
     )
     expect(
         "other mailto",
