@@ -31,7 +31,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:564fcec743cee193bae6f5641a3bdf02dc25310e6bdf3f366d535064b628c96d"
+      "source_hash": "sha256:8c1f972e6d5c3c7909e81e06654aeedd375843577cf53f89cd7d80386e6ee1db"
     },
     {
       "locale": "ja",
@@ -70,7 +70,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:408a7df25203cd03894ed649634a1a2d3346f868753f75626dc368bb155ed707"
+      "source_hash": "sha256:99dc6b5d10007f231ea53a6f1013d0b59a6f5d5b545255eba1ff1d1243862892"
     },
     {
       "locale": "en",
@@ -96,7 +96,7 @@
       "review_status": "unreviewed",
       "needs_native_check": false,
       "self_verified": false,
-      "source_hash": "sha256:13bf226d8b41bd9165bf7fce9d82614c7832a4ef7961e3fd6754db95b49bcc8c"
+      "source_hash": "sha256:79a1716964080f3bacb86d33de985b52747d33d1c29e1f8ebfd28c143d537658"
     },
     {
       "locale": "en",
@@ -135,7 +135,7 @@
       "review_status": "unreviewed",
       "needs_native_check": false,
       "self_verified": false,
-      "source_hash": "sha256:9efe8fd443833388d119fcd55d8f72e9a8feca66e5eef9b78c17ee07f78bc548"
+      "source_hash": "sha256:f0766b9dd25ef113c9e69d5d2ae08161f8ac9c24ec75e722e99ca9de1e2c5467"
     },
     {
       "locale": "zh-Hans",
@@ -161,7 +161,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:90db01093ff7d6abb272d13152d2e1609bc7996aabe4bcafdb7e5037c0d63a82"
+      "source_hash": "sha256:8623928f6f3d22a4d1e1029a6bf7f934bf6c96ec3c5681a8f2b9ef8ee148826c"
     },
     {
       "locale": "zh-Hans",
@@ -200,7 +200,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:5242739886de9b9efdfcb71a05baf314e270350458e8348cc71cea48d06236b0"
+      "source_hash": "sha256:1b4b39a98cfdd0a1723bbc48feb6ef870c2048f9c3a871f23e55090f82ad44a5"
     },
     {
       "locale": "pt-BR",
@@ -226,7 +226,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:36fe2e1c341e94a7d2dc14e18aed62b09ee5f95a681c717630376736e662bc7d"
+      "source_hash": "sha256:ae02685ffff0a2938af75143451fc82e4dd8904f23c0d1bf4fb2a782b5c3096c"
     },
     {
       "locale": "pt-BR",
@@ -265,7 +265,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:e1f125134aaea009805103570712eaf3fe5b142a7bf1b321c46228124d572afc"
+      "source_hash": "sha256:87b445b12ac2079fbbbfc8da0886a694e6f7d6d9514bbef8659f4f1962c6651e"
     },
     {
       "locale": "fil",
@@ -291,7 +291,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:26f118928599c9981704365a4c81090c4c611bab8411e31dd927d971c9d592cd"
+      "source_hash": "sha256:68831c101f791c0fb8f7d7856c8b6e09182c84749607d188243f3745708a1a0a"
     },
     {
       "locale": "fil",
@@ -330,7 +330,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:8f9a8c4a686d631bfdabdea9bdab0e9737f51ca25b2b129bdc5d446a00cfc087"
+      "source_hash": "sha256:cf7481a55f956db0a8ed3be6cbf959f268a43e641c6751fcedd4a0b85bdd901c"
     },
     {
       "locale": "vi",
@@ -356,7 +356,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:43709d948396a36d6255af4dce5cec3a58ee939a964f30e7ea103dc289153229"
+      "source_hash": "sha256:cec9a2dd8cb0ff27b7efe3e014c87e0d74e4c5b932b6eb4b1ef62dab9d61e6e4"
     },
     {
       "locale": "vi",
@@ -395,7 +395,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:5ce3d230a6e6dd05a3e9e50420d21926e7067e183a62a113d42ce8937f6f0ba7"
+      "source_hash": "sha256:76e38c1a7fddd68210040188935149c205bf0bbc5a6df752434e06f194197db4"
     },
     {
       "locale": "ne",
@@ -421,7 +421,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:839db6eb2a6f485e5e87badbd0112900a898e97cac179195fdfe99f511b004a2"
+      "source_hash": "sha256:59c7b2e1543076e3ea4dce48b2259fa5a5140adfb10b21a894ab5224218bfad4"
     },
     {
       "locale": "ne",
@@ -460,7 +460,7 @@
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:9439f97dd0d2daca007eb439e364d04907533b5642bb410ed3de52448d0be405"
+      "source_hash": "sha256:4659ca8e16ff371bac594547723b6ae3194b3737d31cdc3b7f2cf25e34a0517d"
     }
   ]
 }

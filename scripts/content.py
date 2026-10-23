@@ -79,7 +79,7 @@ PRIVACY_BODY = f"""
 <section id="app">
   <h2>What the app is</h2>
   <p>Bridge Kids is an app for children aged 3–10, used with a parent or guardian, on iPhone and iPad. The app id is {APP_ID}. The app is free. A parent sets the app up. The child uses a separate child area. Settings, deleting a profile, and links to these pages are behind a parental gate. The gate does not ask for a birth date or a birth year.</p>
-  <p>A parent can keep up to four child profiles on one device. A profile can hold a nickname, an avatar chosen in the app, an age band, a learning direction, and an optional start date. On the App Store, the app is in the Kids category under Apple's "Ages 5 &amp; Under" band. It is designed for children aged 3–10.</p>
+  <p>A parent can keep up to four child profiles on one device. A profile can hold a nickname, an avatar chosen in the app, an age band, a learning direction, and an optional start date. On the App Store, the app is in the Kids category. It is designed for children aged 3–10.</p>
   <p>There are two learning directions: one teaches Japanese and one teaches American English. All lessons, pictures and audio are built into the app. The parent area is in English or Japanese.</p>
   <p>The child area does not show a price. The app is designed without streak counters.</p>
 </section>
@@ -114,7 +114,7 @@ PRIVACY_BODY = f"""
 
 <section id="network">
   <h2>The network</h2>
-  <p>All lessons, pictures and audio are built into the app. The app does not connect to the internet and downloads nothing after it is installed. App updates come through the App Store under Apple's rules. Links to these pages open in Safari only after a grown-up passes the parental gate.</p>
+  <p>All lessons, pictures and audio are built into the app. The app does not connect to the internet and downloads nothing after it is installed. App updates come through the App Store under Apple's rules. Links to these pages open in Safari only after a grown-up passes the parental gate. Your child's data (profiles, learning records and settings) does not leave this device.</p>
 </section>
 
 <section id="backups">
@@ -156,7 +156,7 @@ PRIVACY_BODY = f"""
   <h3>Apple Kids Category</h3>
   <p>The child area is for children aged 3–10. Links out and parent settings sit behind a parental gate. The app is free. The app does not include third-party advertising or third-party analytics, and it does not send personal information or device identifiers to the publisher or to an advertising network.</p>
   <h3>COPPA</h3>
-  <p>The Children's Online Privacy Protection Act, including the amended rule that required compliance by 22 April 2026. Persistent identifiers can be personal information. The app is designed not to collect personal information, including those identifiers. The written retention policy is in the children's notice. The public email is in the contact section. The postal address and telephone number are not finished.</p>
+  <p>The Children's Online Privacy Protection Act, including the amended rule that required compliance by 22 April 2026. COPPA treats persistent identifiers as personal information. Stating that here is a question for counsel. The app is designed not to collect personal information, including those identifiers. The written retention policy is in the children's notice. The public email is in the contact section. The postal address and telephone number are not finished.</p>
   <h3>GDPR children's rules and the UK Age Appropriate Design Code</h3>
   <p>Article 8 of the GDPR, and the UK code, set extra care around children, including limits on nudge design. We do not receive children's personal data. The app is free and is designed without streak pressure. Whether on-device storage creates any duty before an EU or UK release, including a data-protection assessment, is open for legal review.</p>
   <h3>APPI (Japan)</h3>
@@ -398,7 +398,7 @@ TERMS_BODY = f"""
     <li>This agreement is between you and Gabriel John Fordan only, and not with Apple. The publisher, not Apple, is solely responsible for the app and its content.</li>
     <li>The license is limited and non-transferable. You may use the app on Apple-branded products that you own or control, as permitted by the Usage Rules in Apple's Media Services terms.</li>
     <li>The publisher is solely responsible for maintenance and support. Apple has no obligation to provide maintenance or support for the app.</li>
-    <li>If the app fails to conform to any applicable warranty, you may notify Apple, and Apple may refund the purchase price, if any (the app is free). To the maximum extent permitted by law, Apple has no other warranty obligation for the app. Any other claim, loss, liability, damage, cost, or expense attributable to a failure to conform to a warranty is the publisher's responsibility.</li>
+    <li>If the app fails to conform to any applicable warranty, you may notify Apple, and Apple will refund the purchase price, if any (the app is free). To the maximum extent permitted by law, Apple has no other warranty obligation for the app. Any other claim, loss, liability, damage, cost, or expense attributable to a failure to conform to a warranty is the publisher's responsibility.</li>
     <li>The publisher, not Apple, is responsible for addressing claims relating to the app or to possession or use of the app, including product-liability claims, claims that the app fails to meet a legal or regulatory requirement, and claims under consumer protection or similar legislation.</li>
     <li>The publisher, not Apple, is responsible for the investigation, defense, settlement, and discharge of any claim that the app, or your possession and use of it, infringes a third party's intellectual-property right.</li>
     <li>You represent that you are not located in a country subject to a United States government embargo, and that you are not listed on any United States government list of prohibited or restricted parties.</li>
@@ -410,7 +410,7 @@ TERMS_BODY = f"""
 
 <section id="privacy">
   <h2>Privacy</h2>
-  <p>The <a href="privacy.html">privacy policy</a> and the <a href="children.html">children's privacy and COPPA notice</a> describe how little information leaves the device. They include the data retention policy. Using the app after those documents are in force means the parent has had a chance to read them. The app is designed not to send a child's information to us.</p>
+  <p>The <a href="privacy.html">privacy policy</a> and the <a href="children.html">children's privacy and COPPA notice</a> explain that no child data leaves the device. They include the data retention policy. Using the app after those documents are in force means the parent has had a chance to read them. The app is designed not to send a child's information to us.</p>
 </section>
 
 <section id="use">
