@@ -1128,8 +1128,10 @@ def test_published_body_drops_draft_notices() -> list[str]:
         failures.append("the children's notice should keep its counsel question")
     if SITE_URL not in privacy_body or "TBD before store release" not in privacy_body:
         failures.append("privacy should name the canonical URL and leave the host TBD")
-    if "fordang.github.io" in privacy_body:
-        failures.append("privacy should not name the github.io host")
+    if "This website," not in privacy_body:
+        failures.append("privacy should name this website without naming a host")
+    if "GitHub Pages" in privacy_body or "hosted by" in privacy_body or "fordang.github.io" in privacy_body:
+        failures.append("privacy should not name a host or the github.io address")
     return failures
 
 
