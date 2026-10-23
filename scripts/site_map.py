@@ -37,7 +37,9 @@ LEGAL_PAGE_IDS: frozenset[str] = frozenset(
 
 DRAFT_MARK = "DRAFT – pending legal review"
 PENDING_MARK = "TRANSLATION PENDING"
-CONTACT_EMAIL = "{{CONTACT_EMAIL}}"
+CONTACT_ADDRESS = "gabrieljohnfordan@gmail.com"
+CONTACT_MAILTO = "mailto:gabrieljohnfordan@gmail.com"
+APP_ID = "com.vendrato.bridgekids"
 POSTAL_ADDRESS = "{{POSTAL_ADDRESS_IF_REQUIRED}}"
 UPDATED = "2026-10-23"
 UPDATED_LABEL = "23 October 2026"

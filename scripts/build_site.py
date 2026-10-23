@@ -23,6 +23,8 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from content import PAGE_BODIES, PAGE_DESCRIPTIONS  # noqa: E402
 from site_map import (  # noqa: E402
+    CONTACT_ADDRESS,
+    CONTACT_MAILTO,
     DRAFT_MARK,
     LOCALES,
     PAGE_IDS,
@@ -53,9 +55,9 @@ DOCUMENTS = (
     (
         "support.html",
         "Support",
-        "Delete a profile, understand speech and backups, and manage a subscription.",
+        "Delete a profile, understand speech and backups, and contact the publisher.",
     ),
-    ("terms.html", "Terms of use", "The draft license, subscriptions, and store terms."),
+    ("terms.html", "Terms of use", "The draft license and store terms. Purchases are not offered at launch."),
 )
 
 
@@ -201,10 +203,10 @@ def page(
 def locale_index_body() -> str:
     return f"""
 <p>Privacy policy, children's privacy notice, support, and terms for the Bridge Kids English-learning apps on iPhone, iPad, and Android.</p>
-<p>Bridge Kids is published by Gabriel John Fordan, an individual developer. The app is designed not to collect personal information, not to use accounts or telemetry, and not to send a child's voice off the device. Speech recognition stays on the device. Parents pay Apple or Google. Profiles are excluded from backups.</p>
+<p>Bridge Kids is published by Gabriel John Fordan, an individual developer. The app is designed not to collect personal information, not to use accounts or telemetry, and not to send a child's voice off the device. Speech recognition stays on the device. In-app purchases are not offered at launch. Profiles are excluded from backups.</p>
 <h2>Documents</h2>
 {document_list("")}
-<p>The contact email and any postal address are still placeholders on the <a href="support.html">support page</a>, the <a href="privacy.html">privacy policy</a>, the <a href="children.html">children's notice</a>, and the <a href="terms.html">terms</a>.</p>
+<p>Email: <a href="{CONTACT_MAILTO}">{esc(CONTACT_ADDRESS)}</a>. The postal address, if one is required, is still a placeholder on the <a href="support.html">support page</a>.</p>
 """
 
 
@@ -215,7 +217,7 @@ def root_index_body() -> str:
 {language_nav("index.html", None, True)}
 <h2>English documents</h2>
 {document_list("en/")}
-<p>Bridge Kids is published by Gabriel John Fordan, an individual developer. The contact email and any postal address are still placeholders.</p>
+<p>Bridge Kids is published by Gabriel John Fordan, an individual developer. Email: <a href="{CONTACT_MAILTO}">{esc(CONTACT_ADDRESS)}</a>. The postal address, if one is required, is still a placeholder.</p>
 """
 
 

@@ -3,8 +3,9 @@
 
 Fails if any HTML or SVG file contains a script, if a stylesheet or
 document loads a third-party URL, if an href or src leaves the site
-for anything other than an Apple or Google app-store link, if HTML
-links or fragments are broken, or if the locale contract is wrong.
+for anything other than an Apple or Google app-store link or the
+approved mailto address, if HTML links or fragments are broken, or if
+the locale contract is wrong.
 
 Valid HTML is checked separately with the Nu Html Checker in CI.
 """
@@ -22,7 +23,8 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from site_map import (  # noqa: E402
-    CONTACT_EMAIL,
+    CONTACT_ADDRESS,
+    CONTACT_MAILTO,
     DRAFT_MARK,
     LEGAL_PAGE_IDS,
     LOCALE_CODES,
@@ -73,12 +75,14 @@ class Collector(HTMLParser):
 
 
 def classify(url: str) -> str:
-    """Return 'internal', 'store', or a short reason the URL is rejected."""
+    """Return 'internal', 'store', 'mailto', or a short reason the URL is rejected."""
     raw = url.strip()
     if not raw:
         return "empty URL"
     lowered = raw.lower()
-    if lowered.startswith(("javascript:", "vbscript:", "data:")):
+    if lowered == CONTACT_MAILTO:
+        return "mailto"
+    if lowered.startswith(("javascript:", "vbscript:", "data:", "mailto:")):
         return "disallowed URL scheme"
     if raw.startswith("//"):
         return "protocol-relative URL"
@@ -199,7 +203,7 @@ def check_documents(root: Path) -> list[str]:
         relative = path.relative_to(root).as_posix()
         for attr, url, line in collector.urls:
             kind = classify(url)
-            if kind == "store":
+            if kind in {"store", "mailto"}:
                 continue
             if kind != "internal":
                 errors.append(f"{relative}:{line}: {attr} {url!r} is not allowed ({kind})")
@@ -287,11 +291,16 @@ def check_contract(root: Path) -> list[str]:
                 errors.append(f"{relative}: missing the {PENDING_MARK} banner")
         elif PENDING_MARK in text:
             errors.append(f"{relative}: English page must not say {PENDING_MARK}")
+        if "{{CONTACT_EMAIL}}" in text:
+            errors.append(f"{relative}: still contains the contact-email placeholder")
         page_id = Path(relative).stem
         if locale is not None and page_id in LEGAL_PAGE_IDS:
-            for token in (CONTACT_EMAIL, POSTAL_ADDRESS, "TODO"):
+            for token in (POSTAL_ADDRESS, "TODO", CONTACT_MAILTO, CONTACT_ADDRESS):
                 if token not in text:
                     errors.append(f"{relative}: missing {token}")
+        if locale is not None and page_id in {"privacy", "terms", "support"}:
+            if "Not offered at launch" not in text:
+                errors.append(f"{relative}: purchases must be marked not offered at launch")
     return errors
 
 
@@ -331,6 +340,7 @@ def self_test() -> list[str]:
 <body><p id="ok">Hi</p><a href="#ok">Here</a>
 <a href="https://apps.apple.com/account/subscriptions">Apple</a>
 <a href="https://play.google.com/store/account/subscriptions">Google</a>
+<a href="mailto:gabrieljohnfordan@gmail.com">gabrieljohnfordan@gmail.com</a>
 </body></html>
 """
     expect("clean page", good, None, css="body { color: #111; }\n")
@@ -338,6 +348,11 @@ def self_test() -> list[str]:
         "script tag",
         "<!DOCTYPE html><html><body><script>bad()</script></body></html>",
         "script tag",
+    )
+    expect(
+        "other mailto",
+        '<!DOCTYPE html><html><body><a href="mailto:other@example.com">x</a></body></html>',
+        "disallowed URL scheme",
     )
     expect(
         "external link",

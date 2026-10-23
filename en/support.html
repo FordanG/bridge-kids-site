@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#fbf7f0" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)">
 <title>Support – Bridge Kids</title>
-<meta name="description" content="Draft support for Bridge Kids: delete a profile, manage a subscription, and contact the publisher.">
+<meta name="description" content="Draft support for Bridge Kids: delete a profile, speech and backups, and contact the publisher.">
 <link rel="stylesheet" href="../css/site.css">
 <link rel="icon" href="../favicon.ico" sizes="32x32">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -43,7 +43,7 @@
     <li><a href="#speech">Speech</a></li>
     <li><a href="#offline">Offline use</a></li>
     <li><a href="#new-device">A new device</a></li>
-    <li><a href="#subscription">Subscriptions</a></li>
+    <li><a href="#purchases">Purchases</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#what-to-write">If you write to us later</a></li>
   </ol>
@@ -57,7 +57,7 @@
 
 <section id="gate">
   <h2>The parental gate</h2>
-  <p>Purchases, restoring a purchase, managing a subscription, settings, deleting a profile, and links out to these pages are behind a gate meant for a grown-up. The gate does not ask for a birth year. It is a barrier, not a guarantee that nobody can pass it. The child area does not show prices.</p>
+  <p>Settings, deleting a profile, and links out to these pages are behind a gate meant for a grown-up. The gate does not ask for a birth year. It is a barrier, not a guarantee that nobody can pass it. Purchases are not offered at launch, so the child area has no price to show.</p>
 </section>
 
 <section id="delete">
@@ -66,13 +66,13 @@
     <li>Open the grown-ups control from the child home or the progress map, and complete the gate.</li>
     <li>In the parent area, delete the profile you want to remove.</li>
   </ol>
-  <p>The exact button labels can still change before release. Deletion removes that profile's nickname, avatar, age band, learning direction, optional start date, and learning record from the device. It does not cancel a store subscription. Removing the whole app removes every profile's local data on that device.</p>
+  <p>The exact button labels can still change before release. Deletion removes that profile's nickname, avatar, age band, learning direction, optional start date, and learning record from the device. Removing the whole app removes every profile's local data on that device.</p>
 </section>
 
 <section id="microphone">
   <h2>Microphone</h2>
   <p>The microphone is optional. You can refuse it in the system permission prompt. The child can still listen and tap. The reason for the permission is shown to the parent, behind the gate. The app does not keep asking the child.</p>
-  <p>To change the choice later, use the system settings for Bridge Kids on the device and turn the microphone on or off. That switch belongs to the operating system.</p>
+  <p>To change the choice later, use the system settings for Bridge Kids. The app id is com.vendrato.bridgekids. Turn the microphone on or off there. That switch belongs to the operating system.</p>
 </section>
 
 <section id="speech">
@@ -87,22 +87,13 @@
 
 <section id="new-device">
   <h2>A new device</h2>
-  <p>Profiles and progress do not move to a new device, and they do not come back from a backup. The app excludes them from iOS backup, from Android backup, and from Android device transfer. This is deliberate.</p>
-  <p>A subscription can be restored on a new device that uses the same store account. Restoring the subscription does not restore progress. You would set up profiles again.</p>
+  <p>Profiles and progress do not move to a new device, and they do not come back from a backup. The app excludes them from iOS backup, from Android backup, and from Android device transfer. This is deliberate. You would set up profiles again on a new device.</p>
 </section>
 
-<section id="subscription">
-  <h2>Subscriptions</h2>
-  <p>Payment is only through the App Store or Google Play. We never see your card. There is no free trial in the current design. Chapters 1, 2, and 4 in each direction are available without a subscription. A subscription unlocks the other chapters, both directions, and up to four profiles on that device.</p>
-  <p>Apple Family Sharing for this subscription is off. The plan does not extend to other Apple IDs through Family Sharing, and it does not transfer between iPhone and Android.</p>
-  <p>The store shows the price and the renewal terms before you pay. A subscription renews until you cancel it with the store. Deleting the app, deleting a profile, or reinstalling does not cancel it.</p>
-  <h3>Manage or cancel on Apple devices</h3>
-  <p><a href="https://apps.apple.com/account/subscriptions">Apple subscription settings</a>. You can also open Settings, then your Apple ID, then Subscriptions. Choose Bridge Kids, then cancel. Apple's screen shows whether access continues through the end of the period you already paid.</p>
-  <h3>Manage or cancel on Google Play</h3>
-  <p><a href="https://play.google.com/store/account/subscriptions">Google Play subscriptions</a>. You can also open the Play Store app, then Payments and subscriptions, then Subscriptions. Cancel there.</p>
-  <p>Inside Bridge Kids, behind the gate, restore and manage are designed to hand off to the same store. If a purchase is waiting for family approval in the store, it stays pending until the store account holder accepts or declines it.</p>
-  <p>On Android, if the device is offline, the current design keeps paid chapters available for seven days after the last successful check with the store, then shows them as sleeping. Nothing already downloaded is deleted. When the store is reachable again, the app checks the purchase on the device.</p>
-  <p>Refunds are requested from the store that charged you. We do not hold the payment and we cannot see the store's payment record.</p>
+<section id="purchases">
+  <h2>Purchases</h2>
+  <p><strong>Not offered at launch.</strong> Bridge Kids does not sell a subscription or any other in-app purchase in this version. There is nothing to restore, cancel, or refund inside the app.</p>
+  <p>If purchases are added later, they go through the App Store.</p>
 </section>
 
 <section id="contact">
@@ -110,21 +101,20 @@
   <p>Publisher: Gabriel John Fordan, an individual developer.</p>
   <dl>
     <dt>Email</dt>
-    <dd><code>{{CONTACT_EMAIL}}</code></dd>
+    <dd><a href="mailto:gabrieljohnfordan@gmail.com">gabrieljohnfordan@gmail.com</a></dd>
     <dt>Postal address</dt>
     <dd><code>{{POSTAL_ADDRESS_IF_REQUIRED}}</code></dd>
     <dt>Telephone</dt>
     <dd>Not published in this draft.</dd>
   </dl>
   <div class="todo">
-    <p><strong>TODO:</strong> Replace <code>{{CONTACT_EMAIL}}</code> with the public contact address Gabriel John Fordan approves. Do not publish a personal email address until he chooses one.</p>
     <p><strong>TODO:</strong> Replace <code>{{POSTAL_ADDRESS_IF_REQUIRED}}</code> only if legal review says a postal address must be published. Leave the placeholder until then. Do not invent a street address, a post-office box, or a telephone number to fill a gap.</p>
   </div>
 </section>
 
 <section id="what-to-write">
   <h2>If you write to us later</h2>
-  <p>Once <code>{{CONTACT_EMAIL}}</code> is a real address, include the store you used (Apple or Google), the device type (iPhone, iPad, or Android), and what you expected to happen. Leave out the child's real name, a voice recording, and screenshots that show a nickname. We do not need them, and email is a poor place for them.</p>
+  <p>Write to <a href="mailto:gabrieljohnfordan@gmail.com">gabrieljohnfordan@gmail.com</a>. Include the store you used (Apple or Google), the device type (iPhone, iPad, or Android), and what you expected to happen. Leave out the child's real name, a voice recording, and screenshots that show a nickname. We do not need them, and email is a poor place for them.</p>
 </section>
 </main>
 <footer class="wrap">
