@@ -1,0 +1,45 @@
+# Checks only. This workflow does not deploy and does not enable GitHub Pages.
+name: Site checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: No scripts, links, and valid HTML
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Download the Nu Html Checker
+        run: |
+          curl -fsSL --retry 3 --retry-delay 2 \
+            -o /tmp/vnu.jar \
+            "https://github.com/validator/validator/releases/download/latest/vnu.jar"
+          echo "19f89e204cb881e2d88c5d0cd451df6c1ee8334e7fe626f6694b64a129f6a813  /tmp/vnu.jar" | sha256sum -c -
+
+      - name: Confirm generated pages match the English source
+        run: python3 scripts/build_site.py --check
+
+      - name: Reject scripts, disallowed URLs, and broken links
+        run: python3 scripts/check_site.py
+
+      - name: Validate HTML, CSS, and SVG
+        run: |
+          find . -type f \( -name '*.html' -o -name '*.css' -o -name '*.svg' \) \
+            ! -path './.git/*' -print0 \
+            | xargs -0 java -jar /tmp/vnu.jar --errors-only --also-check-css --also-check-svg
