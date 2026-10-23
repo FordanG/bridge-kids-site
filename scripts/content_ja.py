@@ -14,7 +14,10 @@ from site_map import (
     CONTACT_MAILTO,
     EMAIL_RETENTION_NOTE,
     POSTAL_ADDRESS,
+    SITE_URL,
 )
+
+CANONICAL_SITE_URL = SITE_URL
 
 # ja counterpart of site_map.EMAIL_RETENTION_LINE ("deleted within 90 days after your request is resolved").
 # JA-S-12: 90 days kept, to be confirmed by Gabriel at the pre-store gate; counsel review pre-store.
@@ -158,7 +161,7 @@ PRIVACY_BODY_JA = f"""
 <section id="website">
   <h2>このウェブサイトについて</h2>
   <p>これらのページは静的なファイルです。Cookieを設定せず、スクリプトを実行せず、外部のフォントや画像を読み込まず、アクセス解析も使用していません。ホスティングサービス（GitHub Pages）は、IPアドレスやユーザーエージェントなどの標準的なサーバーログを、独自のポリシーに基づいて保持することがあります。私たちはこれらのログを受け取らず、トラッキングにも使用しません。この下書きをブラウザで自動翻訳したものは、公式の翻訳ではありません。これらのページは、ブラウザに翻訳しないよう求めています。</p>
-  <p>このサイト（fordang.github.io/bridge-kids-site）は、GitHub Pagesでホスティングされています。</p>
+  <p>このサイト（{CANONICAL_SITE_URL}）は、GitHub Pagesでホスティングされています。</p>
 </section>
 
 <section id="laws">

@@ -1029,12 +1029,16 @@ def check_tree(
             errors.append(f"{path}: path must be {locale}/{page_id}.html")
 
     release_set = set(languages)
+    stamp = publication_stamp(checklist, languages) if languages else None
     for locale, page_id, relative in expected_pairs():
         record = by_key.pop((locale, page_id), None)
         target = root / relative
         html = target.read_text(encoding="utf-8") if target.is_file() else None
         if html is None:
-            errors.append(f"{relative}: page file is missing")
+            if locale not in release_set and (release or stamp is not None):
+                notices.append(f"{relative}: omitted from the release output")
+            else:
+                errors.append(f"{relative}: page file is missing")
         if record is None:
             errors.append(f"{relative}: missing review record")
             continue

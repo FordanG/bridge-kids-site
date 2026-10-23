@@ -11,8 +11,10 @@ Valid HTML is checked separately with the Nu Html Checker in CI.
 
 `python3 scripts/check_site.py --release` also fails when visible page
 text, the title, or the meta description still contains draft, TODO,
-placeholder, not finished, or "question for counsel", or when a meta
-description still starts with "Draft ". The default run does not.
+placeholder, not finished, "question for counsel", "counsel still has to",
+"still has to review", or "TBD before store release", or when a meta
+description still starts with "Draft ". That scan covers index.html,
+404.html, and the locales named in review.json. The default run does not.
 """
 
 from __future__ import annotations
@@ -42,6 +44,7 @@ from site_map import (  # noqa: E402
     PENDING_MARK,
     POSTAL_ADDRESS,
     ROOT_HTML,
+    SITE_URL,
 )
 
 ROOT = SCRIPT_DIR.parent
@@ -131,6 +134,15 @@ def classify(url: str) -> str:
         and parts.port in (None, 443)
     ):
         return "store"
+    canonical_host = (urlsplit(SITE_URL).hostname or "").lower().rstrip(".")
+    if (
+        parts.scheme == "https"
+        and host == canonical_host
+        and parts.username is None
+        and parts.password is None
+        and parts.port in (None, 443)
+    ):
+        return "canonical"
     return "external URL is not an app-store link"
 
 
@@ -234,7 +246,7 @@ def check_documents(root: Path) -> list[str]:
         relative = path.relative_to(root).as_posix()
         for attr, url, line in collector.urls:
             kind = classify(url)
-            if kind in {"store", "mailto"}:
+            if kind in {"store", "mailto", "canonical"}:
                 continue
             if kind != "internal":
                 errors.append(f"{relative}:{line}: {attr} {url!r} is not allowed ({kind})")
@@ -385,13 +397,25 @@ def pending_banner_errors(relative: str, text: str) -> list[str]:
     return []
 
 
+def expected_html_paths(root: Path) -> set[str]:
+    """Draft trees include every locale. A stamped tree ships release languages only."""
+    launch = launch_locales(root)
+    codes: tuple[str, ...] | set[str]
+    if drafts_are_required(root, launch):
+        codes = LOCALE_CODES
+    else:
+        codes = launch
+    expected = set(ROOT_HTML)
+    for code in codes:
+        for page_id in PAGE_IDS:
+            expected.add(f"{code}/{page_id}.html")
+    return expected
+
+
 def check_contract(root: Path) -> list[str]:
     errors: list[str] = []
     found = {path.relative_to(root).as_posix() for path in html_files(root)}
-    expected = set(ROOT_HTML)
-    for code in LOCALE_CODES:
-        for page_id in PAGE_IDS:
-            expected.add(f"{code}/{page_id}.html")
+    expected = expected_html_paths(root)
     missing = sorted(expected - found)
     extra = sorted(found - expected)
     for relative in missing:
@@ -462,6 +486,12 @@ RELEASE_TEXT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("placeholder", re.compile(r"(?<![A-Za-z])placeholder(?![A-Za-z])", re.I)),
     ("not finished", re.compile(r"(?<![A-Za-z])not finished(?![A-Za-z])", re.I)),
     ("question for counsel", re.compile(r"(?<![A-Za-z])question for counsel(?![A-Za-z])", re.I)),
+    ("counsel still has to", re.compile(r"(?<![A-Za-z])counsel still has to(?![A-Za-z])", re.I)),
+    ("still has to review", re.compile(r"(?<![A-Za-z])still has to review(?![A-Za-z])", re.I)),
+    (
+        "TBD before store release",
+        re.compile(r"(?<![A-Za-z])TBD before store release(?![A-Za-z])", re.I),
+    ),
     *(
         (phrase, re.compile(re.escape(phrase)))
         for phrase in RELEASE_BANNED_PHRASES_JA
@@ -527,36 +557,29 @@ def release_surface(html: str) -> tuple[str, list[str]]:
     return surface, parser.descriptions
 
 
-def release_scan_paths(root: Path) -> list[Path]:
-    """Released languages, plus the root pages. A held language's draft line stays."""
-    review = root / "review.json"
-    languages: list[str] | None = None
-    if review.is_file():
-        try:
-            data = json.loads(review.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            data = None
-        raw = data.get("release_languages") if isinstance(data, dict) else None
-        if isinstance(raw, list) and raw and all(isinstance(code, str) for code in raw):
-            languages = raw
-    if languages is None:
+def ship_html_files(root: Path) -> list[Path]:
+    """Pages a release ships: root pages plus release_languages.
+
+    Without review.json, every HTML file is scanned so a one-file fixture
+    still exercises the banned phrases. A held language's draft line stays
+    out of the scan.
+    """
+    if not (root / "review.json").is_file():
         return html_files(root)
-    paths: list[Path] = []
-    for name in ("index.html", "404.html"):
-        candidate = root / name
-        if candidate.is_file():
-            paths.append(candidate)
-    for code in languages:
-        folder = root / code
-        if folder.is_dir():
-            paths.extend(sorted(folder.glob("*.html")))
-    return paths
+    launch = launch_locales(root)
+    chosen: list[Path] = []
+    for path in html_files(root):
+        relative = path.relative_to(root).as_posix()
+        parts = Path(relative).parts
+        if relative in ROOT_HTML or (len(parts) == 2 and parts[0] in launch):
+            chosen.append(path)
+    return chosen
 
 
 def release_text_errors(root: Path) -> list[str]:
     """Case-insensitive draft words in visible text, title, and meta description."""
     errors: list[str] = []
-    for path in release_scan_paths(root):
+    for path in ship_html_files(root):
         html = path.read_text(encoding="utf-8")
         surface, descriptions = release_surface(html)
         label = path.relative_to(root).as_posix()
@@ -618,14 +641,15 @@ def _copy_html_tree(source: Path, dest: Path) -> None:
         shutil.copyfile(review, dest / "review.json")
 
 
-def _stage_marker_replaced_copy(source: Path, dest: Path) -> None:
-    """QA's simulation: Final Review OK, a date, and the four gated markers replaced."""
-    _copy_html_tree(source, dest)
+def _replace_gated_markers(dest: Path) -> None:
     for path in html_files(dest):
         text = path.read_text(encoding="utf-8")
         for old, new in GATED_MARKER_REPLACEMENTS:
             text = text.replace(old, new)
         path.write_text(text, encoding="utf-8")
+
+
+def _strip_launch_draft_chrome(dest: Path) -> None:
     effective = "<p>Effective date: 23 October 2026. Last updated: 23 October 2026.</p>\n"
     for path in _launch_html_paths(dest):
         text = path.read_text(encoding="utf-8")
@@ -633,10 +657,20 @@ def _stage_marker_replaced_copy(source: Path, dest: Path) -> None:
         if "Effective date:" not in text:
             text = text.replace("</body>", effective + "</body>", 1)
         path.write_text(text, encoding="utf-8")
-    _refresh_simulated_review(dest)
 
 
-def _refresh_simulated_review(dest: Path) -> None:
+def _stage_marker_replaced_copy(source: Path, dest: Path) -> None:
+    """Replace the four gated markers and keep this fixture's own unstamped checklist.
+
+    The checklist is written here. It is not the repository checklist, so a
+    stamped Final Review OK on the real site cannot change this test.
+    """
+    _copy_html_tree(source, dest)
+    _replace_gated_markers(dest)
+    _refresh_simulated_review(dest, stamp=False)
+
+
+def _refresh_simulated_review(dest: Path, *, stamp: bool = False) -> None:
     import review_check
 
     review_file = dest / "review.json"
@@ -672,16 +706,22 @@ def _refresh_simulated_review(dest: Path) -> None:
     languages = data.get("release_languages")
     checklist = dest / "release" / "checklist.json"
     checklist.parent.mkdir(parents=True, exist_ok=True)
+    if stamp:
+        final_review_ok: dict[str, object] | None = {
+            "by": "human:gabriel",
+            "date": "2026-10-23",
+            "languages": languages,
+        }
+        effective_date: str | None = "2026-10-23"
+    else:
+        final_review_ok = None
+        effective_date = None
     checklist.write_text(
         json.dumps(
             {
                 "site": {
-                    "final_review_ok": {
-                        "by": "human:gabriel",
-                        "date": "2026-10-23",
-                        "languages": languages,
-                    },
-                    "effective_date": "2026-10-23",
+                    "final_review_ok": final_review_ok,
+                    "effective_date": effective_date,
                     "self_verified": [],
                     "self_verified_blocks": listed_blocks,
                 }
@@ -836,7 +876,8 @@ def test_r2_markers_replaced_still_blocks_release_words() -> list[str]:
     expected = {
         "en/privacy.html": (
             "are not finished",
-            "Name the site host when a deploy target is configured.",
+            "TBD before store release",
+            "https://bridgekids.vendrato.com",
         ),
         "en/children.html": (
             "are not finished",
@@ -859,6 +900,10 @@ def test_r2_markers_replaced_still_blocks_release_words() -> list[str]:
     with tempfile.TemporaryDirectory() as tmp:
         dest = Path(tmp)
         _stage_marker_replaced_copy(ROOT, dest)
+        checklist = json.loads((dest / "release" / "checklist.json").read_text(encoding="utf-8"))
+        site = checklist.get("site") if isinstance(checklist, dict) else None
+        if not isinstance(site, dict) or site.get("final_review_ok") is not None or site.get("effective_date") is not None:
+            failures.append(f"the marker fixture checklist must stay unstamped, got {checklist}")
         for relative, phrases in expected.items():
             surface, _descriptions = release_surface(
                 (dest / relative).read_text(encoding="utf-8")
@@ -873,7 +918,14 @@ def test_r2_markers_replaced_still_blocks_release_words() -> list[str]:
                     failures.append(f"{path.name}: gated marker {old!r} was not replaced")
         word_errors = release_text_errors(dest)
         joined = "\n".join(word_errors)
-        for token in ("draft", "todo", "placeholder", "not finished", "question for counsel"):
+        for token in (
+            "draft",
+            "todo",
+            "placeholder",
+            "not finished",
+            "question for counsel",
+            "TBD before store release",
+        ):
             if f"release blocked by {token!r}" not in joined:
                 failures.append(f"release scan should report {token!r}, got {word_errors}")
         if "meta description still starts with 'Draft '" not in joined:
@@ -885,7 +937,10 @@ def test_r2_markers_replaced_still_blocks_release_words() -> list[str]:
         other = [
             item
             for item in errors
-            if "release blocked by" not in item and "meta description still starts" not in item
+            if "release blocked by" not in item
+            and "meta description still starts" not in item
+            and "Final Review OK is not recorded" not in item
+            and "effective_date is not set" not in item
         ]
         if other:
             failures.append(
@@ -928,10 +983,12 @@ def test_r2_clean_pages_pass_release_word_scan() -> list[str]:
         if release_text_errors(dest):
             failures.append("today, class=draft, and comments must not fail the release scan")
         sample.unlink()
-        _stage_marker_replaced_copy(ROOT, dest)
+        _copy_html_tree(ROOT, dest)
+        _replace_gated_markers(dest)
+        _strip_launch_draft_chrome(dest)
         for path in html_files(dest):
             path.write_text(scrub_release_words(path.read_text(encoding="utf-8")), encoding="utf-8")
-        _refresh_simulated_review(dest)
+        _refresh_simulated_review(dest, stamp=True)
         privacy = (dest / "en" / "privacy.html").read_text(encoding="utf-8")
         surface, _descriptions = release_surface(privacy)
         if "today" not in surface:
@@ -1063,6 +1120,20 @@ def self_test() -> list[str]:
         failures.append("en privacy should not require a guessed GitHub Pages host")
     failures.extend(test_ja_release_banned_phrases())
     failures.extend(test_ja_dates())
+    expect(
+        "canonical link",
+        (
+            "<!DOCTYPE html><html><head>"
+            f'<link rel="canonical" href="{SITE_URL}/en/privacy.html">'
+            "</head><body></body></html>"
+        ),
+        None,
+    )
+    expect(
+        "canonical host link",
+        f'<!DOCTYPE html><html><body><a href="{SITE_URL}/">home</a></body></html>',
+        None,
+    )
     failures.extend(test_published_drops_draft_placeholder_requirements())
     failures.extend(test_published_body_drops_draft_notices())
     failures.extend(test_r2_markers_replaced_still_blocks_release_words())
@@ -1070,6 +1141,9 @@ def self_test() -> list[str]:
     import review_check
 
     failures.extend(review_check.fixture_self_verified_blocks())
+    failures.extend(test_release_bans_counsel_pending_and_host_tbd())
+    failures.extend(test_stamped_checklist_passes_both_modes())
+    failures.extend(test_release_output_omits_held_locales())
     return failures
 
 
@@ -1137,26 +1211,11 @@ def test_published_drops_draft_placeholder_requirements() -> list[str]:
             "<!DOCTYPE html><html><body><p>Missing.</p></body></html>",
             encoding="utf-8",
         )
-        held_other = (
-            "<!DOCTYPE html><html><body><p>TRANSLATION PENDING. "
-            "Draft dated children aged 3–10</p></body></html>"
-        )
-        held_ja = (
-            "<!DOCTYPE html><html><body><p>2026年10月23日付の下書きです。</p></body></html>"
-        )
-        for code in LOCALE_CODES:
-            folder = root / code
-            folder.mkdir()
-            for page_id in PAGE_IDS:
-                if code == "en" and page_id == "index":
-                    text = index
-                elif code == "en":
-                    text = ready
-                elif code == "ja":
-                    text = held_ja
-                else:
-                    text = held_other
-                (folder / f"{page_id}.html").write_text(text, encoding="utf-8")
+        folder = root / "en"
+        folder.mkdir()
+        for page_id in PAGE_IDS:
+            text = index if page_id == "index" else ready
+            (folder / f"{page_id}.html").write_text(text, encoding="utf-8")
         if drafts_are_required(root, {"en"}):
             failures.append("a signed checklist should clear the draft-placeholder requirement")
         errors = check_contract(root)
@@ -1169,6 +1228,13 @@ def test_published_drops_draft_placeholder_requirements() -> list[str]:
             failures.append(f"published contract should not require draft placeholders, got {blocked}")
         if errors:
             failures.append(f"published contract fixture should pass, got {errors}")
+        held = root / "ja" / "privacy.html"
+        held.parent.mkdir()
+        held.write_text(ready, encoding="utf-8")
+        unexpected = check_contract(root)
+        if not any("unexpected HTML file ja/privacy.html" in item for item in unexpected):
+            failures.append(f"a published tree should reject a held locale page, got {unexpected}")
+        held.unlink()
         terms = root / "en" / "terms.html"
         terms.write_text(terms.read_text(encoding="utf-8").replace(CONTACT_MAILTO, "mailto:missing@example.com"), encoding="utf-8")
         # The address text is still the approved address inside the old mailto. Remove both.
@@ -1240,6 +1306,206 @@ def test_published_body_drops_draft_notices() -> list[str]:
         failures.append("a held language should keep the body draft notice")
     if "Ages 5" in build_site.PAGE_BODIES["children"] or "Ages 5" in children:
         failures.append("the children's notice should not name an Apple age band")
+    privacy_body = build_site.PAGE_BODIES["privacy"]
+    if "is in the Kids category" in privacy_body or "is listed in the Kids category" not in privacy_body:
+        failures.append("privacy should say the app is listed in the Kids category")
+    if "Counsel still has to review the finished app before each storefront." in privacy_body:
+        failures.append("the old counsel-pending storefront sentence should be gone")
+    if "Each new storefront gets its own legal review before the app is offered there." not in privacy_body:
+        failures.append("privacy should give each storefront its own legal review")
+    if "Stating that here is a question for counsel." in privacy_body:
+        failures.append("the COPPA counsel sentence should be deleted")
+    if "is a question for counsel before release." not in build_site.PAGE_BODIES["children"]:
+        failures.append("the children's notice should keep its counsel question")
+    if SITE_URL not in privacy_body or "TBD before store release" not in privacy_body:
+        failures.append("privacy should name the canonical URL and leave the host TBD")
+    if "fordang.github.io" in privacy_body:
+        failures.append("privacy should not name the github.io host")
+    return failures
+
+
+def test_release_bans_counsel_pending_and_host_tbd() -> list[str]:
+    """--release blocks the counsel-pending phrases and the unsettled host line."""
+    failures: list[str] = []
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        blocked = root / "sample.html"
+        blocked.write_text(
+            "<!DOCTYPE html><html><head><title>Ready</title></head><body>"
+            "<p>Counsel still has to review the finished app before each storefront.</p>"
+            "<p>TBD before store release.</p>"
+            "</body></html>",
+            encoding="utf-8",
+        )
+        errors = release_text_errors(root)
+        joined = "\n".join(errors)
+        for token in ("counsel still has to", "still has to review", "TBD before store release"):
+            if f"release blocked by {token!r}" not in joined:
+                failures.append(f"release scan should report {token!r}, got {errors}")
+        blocked.write_text(
+            "<!DOCTYPE html><html><head><title>Ready</title></head><body>"
+            "<p>Each new storefront gets its own legal review before the app is offered there.</p>"
+            "<p>today's play time</p>"
+            "</body></html>",
+            encoding="utf-8",
+        )
+        cleared = release_text_errors(root)
+        if cleared:
+            failures.append(f"the replacement storefront sentence should pass the release scan, got {cleared}")
+    return failures
+
+
+def _published_site_page(*, legal: bool, privacy: bool) -> str:
+    parts = [
+        "<!DOCTYPE html><html><head><title>Ready</title>",
+        '<meta name="description" content="Ready page.">',
+        f'<link rel="canonical" href="{SITE_URL}/en/privacy.html">',
+        "</head><body>",
+        "<p>Effective date: 1 November 2026. Last updated: 1 November 2026.</p>",
+        "<p>children aged 3–10</p>",
+    ]
+    if legal:
+        parts.append(f"<p>{EMAIL_RETENTION_LINE}</p>")
+        parts.append(f'<p><a href="{CONTACT_MAILTO}">{CONTACT_ADDRESS}</a></p>')
+    if privacy:
+        parts.append(
+            "<p>IP address. user agent. The publisher does not receive the logs "
+            "and we do not use them for tracking.</p>"
+        )
+    parts.append("</body></html>")
+    return "".join(parts)
+
+
+def test_stamped_checklist_passes_both_modes() -> list[str]:
+    """A publishable tree with Final Review OK passes check_site in both modes."""
+    failures: list[str] = []
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "review.json").write_text(
+            json.dumps({"version": 1, "release_languages": ["en"], "records": []}) + "\n",
+            encoding="utf-8",
+        )
+        checklist = root / "release" / "checklist.json"
+        checklist.parent.mkdir()
+        checklist.write_text(
+            json.dumps(
+                {
+                    "site": {
+                        "final_review_ok": {
+                            "by": "human:gabriel",
+                            "date": "2026-11-01",
+                            "languages": ["en"],
+                        },
+                        "effective_date": "2026-11-01",
+                        "self_verified": [],
+                    }
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        legal = _published_site_page(legal=True, privacy=False)
+        privacy = _published_site_page(legal=True, privacy=True)
+        index = _published_site_page(legal=False, privacy=False)
+        missing = (
+            "<!DOCTYPE html><html><head><title>Missing</title></head>"
+            "<body><p>That address is not a page on this site.</p></body></html>"
+        )
+        (root / "index.html").write_text(index, encoding="utf-8")
+        (root / "404.html").write_text(missing, encoding="utf-8")
+        english = root / "en"
+        english.mkdir()
+        for page_id in PAGE_IDS:
+            text = index if page_id == "index" else privacy if page_id == "privacy" else legal
+            (english / f"{page_id}.html").write_text(text, encoding="utf-8")
+        normal = check_tree(root, contract=True)
+        if normal:
+            failures.append(f"a stamped checklist should pass check_site, got {normal}")
+        released = release_text_errors(root)
+        if released:
+            failures.append(f"a stamped checklist should pass check_site --release, got {released}")
+        (english / "privacy.html").write_text(
+            privacy.replace("</body>", "<p>TBD before store release.</p></body>"),
+            encoding="utf-8",
+        )
+        still_normal = check_tree(root, contract=True)
+        if still_normal:
+            failures.append(f"the host TBD line should not fail the default check, got {still_normal}")
+        blocked = release_text_errors(root)
+        if not any("TBD before store release" in item for item in blocked):
+            failures.append(f"--release should block the host TBD line, got {blocked}")
+    return failures
+
+
+def test_release_output_omits_held_locales() -> list[str]:
+    """Published output and the release word scan stay inside release_languages."""
+    failures: list[str] = []
+    import build_site
+
+    draft_codes = [code for code, _native, _english in build_site.locales_for_output(None)]
+    if draft_codes != list(LOCALE_CODES):
+        failures.append(f"a draft build should write every locale, got {draft_codes}")
+    published_codes = [
+        code
+        for code, _native, _english in build_site.locales_for_output(("2026-11-01", "1 November 2026"))
+    ]
+    if published_codes != ["en"]:
+        failures.append(f"a published build should write only en, got {published_codes}")
+    nav = build_site.language_nav("privacy.html", "en", False)
+    for code in LOCALE_CODES:
+        if code == "en":
+            if f"../{code}/privacy.html" not in nav:
+                failures.append("the language switcher should link English")
+            continue
+        if f"../{code}/" in nav or f'hreflang="{code}"' in nav:
+            failures.append(f"the language switcher should not link {code}")
+    privacy = build_site.render_locale(
+        "en", "English", "English", "privacy", "Privacy policy", None
+    )
+    if f'<link rel="canonical" href="{SITE_URL}/en/privacy.html">' not in privacy:
+        failures.append("the privacy page should carry its canonical link")
+    if "fordang.github.io" in privacy:
+        failures.append("generated privacy HTML should not name the github.io host")
+    home = build_site.render_root(None)
+    if f'<link rel="canonical" href="{SITE_URL}/">' not in home:
+        failures.append("the root page should canonicalise to the site origin")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "review.json").write_text(
+            json.dumps({"version": 1, "release_languages": ["en"], "records": []}) + "\n",
+            encoding="utf-8",
+        )
+        held = root / "ja" / "privacy.html"
+        held.parent.mkdir()
+        held.write_text(
+            "<!DOCTYPE html><html><body><p>TODO placeholder draft</p></body></html>",
+            encoding="utf-8",
+        )
+        (root / "en").mkdir()
+        (root / "en" / "privacy.html").write_text(
+            "<!DOCTYPE html><html><head><title>Ready</title></head><body><p>Ready.</p></body></html>",
+            encoding="utf-8",
+        )
+        (root / "index.html").write_text(
+            "<!DOCTYPE html><html><head><title>Ready</title></head><body><p>Ready.</p></body></html>",
+            encoding="utf-8",
+        )
+        (root / "404.html").write_text(
+            "<!DOCTYPE html><html><head><title>Ready</title></head><body><p>Ready.</p></body></html>",
+            encoding="utf-8",
+        )
+        ignored = release_text_errors(root)
+        if ignored:
+            failures.append(f"a held locale should not fail the release word scan, got {ignored}")
+        (root / "en" / "privacy.html").write_text(
+            "<!DOCTYPE html><html><head><title>Ready</title></head><body><p>TODO</p></body></html>",
+            encoding="utf-8",
+        )
+        seen = release_text_errors(root)
+        if not any(item.startswith("en/privacy.html:") for item in seen):
+            failures.append(f"an English TODO should fail the release word scan, got {seen}")
+        if any(item.startswith("ja/") for item in seen):
+            failures.append(f"the release word scan should leave out ja, got {seen}")
     return failures
 
 
