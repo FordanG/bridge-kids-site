@@ -39,6 +39,8 @@ DRAFT_MARK = "DRAFT – pending legal review"
 PENDING_MARK = "TRANSLATION PENDING"
 CONTACT_ADDRESS = "gabrieljohnfordan@gmail.com"
 CONTACT_MAILTO = "mailto:gabrieljohnfordan@gmail.com"
+# Public origin of this site. No CNAME is added here, and nothing is published.
+SITE_URL = "https://bridgekids.vendrato.com"
 APP_ID = "com.vendrato.bridgekids"
 POSTAL_ADDRESS = "{{POSTAL_ADDRESS_IF_REQUIRED}}"
 EMAIL_RETENTION_LINE = "deleted within 90 days after your request is resolved"

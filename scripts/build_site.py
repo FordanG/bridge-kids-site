@@ -11,8 +11,11 @@ translator. This script does not translate.
 Draft banners and the "Draft dated" line stay until release/checklist.json
 has both Gabriel's Final Review OK and site.effective_date. When both
 are set, this script removes the banners, drops the body paragraphs that
-say the document is not in force, and writes that date as the effective
-date and the last-updated date.
+say the document is not in force, writes that date as the effective
+date and the last-updated date, and writes only the locales in
+release_languages. Draft builds still write every locale. Each page
+links its canonical URL under the public site origin. This script does
+not add a CNAME and does not publish the site.
 
 Usage:
   python3 scripts/build_site.py
@@ -40,6 +43,7 @@ from site_map import (  # noqa: E402
     PAGE_IDS,
     PAGES,
     PENDING_MARK,
+    SITE_URL,
     UPDATED,
     UPDATED_LABEL,
 )
@@ -117,6 +121,22 @@ def release_rows() -> list[tuple[str, str, str]]:
     """Parent-UI order, limited to the launch languages."""
     chosen = set(release_codes())
     return [row for row in LOCALES if row[0] in chosen]
+
+
+def locales_for_output(
+    published: tuple[str, str] | None,
+) -> list[tuple[str, str, str]]:
+    """Draft builds write every locale. A published build writes the launch set."""
+    if published is None:
+        return list(LOCALES)
+    return release_rows()
+
+
+def canonical_href(relative: str) -> str:
+    """Absolute canonical URL. The site origin has no repository prefix."""
+    if relative == "index.html":
+        return f"{SITE_URL}/"
+    return f"{SITE_URL}/{relative}"
 
 
 def language_nav(page_file: str, current_locale: str | None, from_root: bool) -> str:
@@ -248,10 +268,14 @@ def page(
     alternates: str,
     locale_note: str,
     published: tuple[str, str] | None = None,
+    canonical: str = "",
 ) -> str:
     body = omit_published_draft_notices(body, published)
     description = public_description(description, published)
     alternate_block = f"\n{alternates}" if alternates else ""
+    canonical_block = (
+        f'\n<link rel="canonical" href="{esc_attr(canonical)}">' if canonical else ""
+    )
     locale_block = f"\n{locale_note}" if locale_note else ""
     pending_block = f"\n{pending}" if pending else ""
     if published is None:
@@ -288,7 +312,7 @@ def page(
 <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)">
 <title>{esc(title)}</title>
 <meta name="description" content="{esc_attr(description)}">
-<link rel="stylesheet" href="{css_href}">
+<link rel="stylesheet" href="{css_href}">{canonical_block}
 <link rel="icon" href="{icon_prefix}favicon.ico" sizes="32x32">
 <link rel="icon" href="{icon_prefix}favicon.svg" type="image/svg+xml">{alternate_block}
 </head>
@@ -388,6 +412,7 @@ def render_locale(
         alternates=alternate_links(page_file),
         locale_note=locale_note,
         published=published,
+        canonical=canonical_href(f"{code}/{page_file}"),
     )
 
 
@@ -405,6 +430,7 @@ def render_root(published: tuple[str, str] | None) -> str:
         alternates="",
         locale_note="",
         published=published,
+        canonical=canonical_href("index.html"),
     )
 
 
@@ -422,6 +448,7 @@ def render_404(published: tuple[str, str] | None) -> str:
         alternates="",
         locale_note="",
         published=published,
+        canonical=canonical_href("404.html"),
     )
 
 
@@ -431,7 +458,7 @@ def render_all() -> dict[str, str]:
         "index.html": render_root(published),
         "404.html": render_404(published),
     }
-    for code, native, english in LOCALES:
+    for code, native, english in locales_for_output(published):
         for page_id, heading in PAGES:
             files[f"{code}/{page_id}.html"] = render_locale(
                 code, native, english, page_id, heading, published
@@ -446,6 +473,13 @@ def main(argv: list[str]) -> int:
         return 2
     files = render_all()
     mismatched: list[str] = []
+    extras = sorted(
+        path.relative_to(ROOT).as_posix()
+        for path in ROOT.rglob("*.html")
+        if ".git" not in path.parts
+        and "scripts" not in path.parts
+        and path.relative_to(ROOT).as_posix() not in files
+    )
     for relative, text in files.items():
         if not text.endswith("\n"):
             text += "\n"
@@ -457,6 +491,15 @@ def main(argv: list[str]) -> int:
             continue
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text, encoding="utf-8", newline="\n")
+    if not check_only:
+        for relative in extras:
+            (ROOT / relative).unlink()
+        for code, _native, _english in LOCALES:
+            folder = ROOT / code
+            if folder.is_dir() and not any(folder.iterdir()):
+                folder.rmdir()
+    elif extras:
+        mismatched.extend(extras)
     if check_only and mismatched:
         print("Generated HTML is out of date:", file=sys.stderr)
         for relative in mismatched:
