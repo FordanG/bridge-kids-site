@@ -38,6 +38,9 @@ jobs:
       - name: Reject scripts, disallowed URLs, and broken links
         run: python3 scripts/check_site.py
 
+      - name: Check review records and source hashes
+        run: python3 scripts/review_check.py
+
       - name: Validate HTML, CSS, and SVG
         run: |
           find . -type f \( -name '*.html' -o -name '*.css' -o -name '*.svg' \) \

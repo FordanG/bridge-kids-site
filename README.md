@@ -87,10 +87,19 @@ Then open `http://127.0.0.1:8080/`. Use only this kind of local preview. Do not 
 - requires the draft comment, the translation banner on non-English pages, the approved mailto, the postal-address placeholder, the 90-day email-retention line and its confirmation comment, the ages 3–10 description, and the GitHub Pages log disclosure on the privacy page
 - rejects Android, Google, subscription, and in-app-purchase wording in the HTML
 - validates HTML, CSS, and SVG with the Nu Html Checker
+- recomputes `review.json` source hashes and rejects a missing author, a reviewer who is also the author, a `human_verified` record without a `human:<name>` reviewer, or a hash that does not match the page
 
 The Nu jar is pinned by SHA-256 to the 12 October 2026 "latest" build (`26.10.12`). If that moving release URL no longer matches the pin, the workflow fails closed until someone updates both.
 
-Run the same link checks locally with `python3 scripts/check_site.py`.
+Run the same link checks locally with `python3 scripts/check_site.py`. Run `python3 scripts/review_check.py` for the review file. That command reports unreviewed pages and does not fail on them. `python3 scripts/review_check.py --release` is the later release gate: unreviewed and flagged pages fail, and privacy, children's privacy, support, and terms pass only when `review_status` is `human_verified`. Legal text is never machine-only for release. `python3 scripts/review_check.py --write` refreshes `source_hash` after a page edit and leaves an existing review untouched.
+
+## Content review
+
+`review.json` has one record for each locale page (`ja`, `en`, `zh-Hans`, `pt-BR`, `fil`, `vi`, `ne` × `index`, `privacy`, `children`, `support`, `terms`). Every record starts as `unreviewed`. The author on those starting records is `ai-product-lead`. Non-English pages set `needs_native_check` because the visible text is still the English draft.
+
+`source_hash` is `sha256:` plus the hex SHA-256 of the page's visible text. Visible text is the text inside `<body>`, excluding `<script>` and `<style>`. The hash is taken after Unicode NFC, after newlines are LF, and after the ends are trimmed. A content edit has to be followed by `--write` so the committed hash matches.
+
+Allowed authors and reviewers are `ai-product-lead`, `ai-ja-reviewer`, `ai-qa`, `ai-designer`, and `human:<name>`. The reviewer has to be a different identity from the author. `self_verified` does not replace that second person.
 
 ## Publish later, only after Gabriel approves
 
