@@ -109,7 +109,7 @@ PRIVACY_BODY = f"""
   <h3>Learning record</h3>
   <p>Progress, a record of which words your child knows and is still practising, and collected stickers. A parent can look at progress in the parent area.</p>
   <h3>Settings</h3>
-  <p>The parent-area language (English or Japanese), the daily play-time limit (one daily allowance per device) and today's play time, and other settings.</p>
+  <p>The parent-area language (English or Japanese), the daily play-time limit (one shared daily allowance per device, for all child profiles) and today's play time, and other settings.</p>
 </section>
 
 <section id="network">
@@ -146,8 +146,8 @@ PRIVACY_BODY = f"""
 
 <section id="website">
   <h2>This website</h2>
-  <p>These pages are static files. They do not set cookies, they do not run scripts, they do not load fonts or pictures from anyone else, and they do not use analytics. The site host (GitHub Pages) may keep standard server logs, such as IP address and user agent, under its own policy. We do not receive those logs, and we do not use them for tracking. Browser translation of this draft is not an official translation. The pages ask browsers not to translate them.</p>
-  <p>This site, fordang.github.io/bridge-kids-site, is hosted by GitHub Pages.</p>
+  <p><strong>TODO:</strong> Name the site host when a deploy target is configured.</p>
+  <p>These pages are static files. They do not set cookies, they do not run scripts, they do not load fonts or pictures from anyone else, and they do not use analytics. The site host may keep standard server logs, such as IP address and user agent, under its own policy. We do not receive those logs, and we do not use them for tracking. A browser translation of this page is not an official translation. The pages ask browsers not to translate them.</p>
 </section>
 
 <section id="laws">
@@ -158,7 +158,7 @@ PRIVACY_BODY = f"""
   <h3>COPPA</h3>
   <p>The Children's Online Privacy Protection Act, including the amended rule that required compliance by 22 April 2026. Persistent identifiers can be personal information. The app is designed not to collect personal information, including those identifiers. The written retention policy is in the children's notice. The public email is in the contact section. The postal address and telephone number are not finished.</p>
   <h3>GDPR children's rules and the UK Age Appropriate Design Code</h3>
-  <p>Article 8 of the GDPR, and the UK code, set extra care around children, including limits on nudge design. We do not receive children's personal data. The app is free and is designed without streak pressure. Whether on-device storage creates any duty before an EU or UK release, including a data-protection assessment, is open.</p>
+  <p>Article 8 of the GDPR, and the UK code, set extra care around children, including limits on nudge design. We do not receive children's personal data. The app is free and is designed without streak pressure. Whether on-device storage creates any duty before an EU or UK release, including a data-protection assessment, is open for legal review.</p>
   <h3>APPI (Japan)</h3>
   <p>The Act on the Protection of Personal Information, including under-16 changes in the 2026 amendment. The start of those changes depends on a cabinet order. The design does not collect personal information. That order still has to be watched.</p>
   <h3>Brazil, ECA Digital</h3>
@@ -172,7 +172,7 @@ PRIVACY_BODY = f"""
   <ul>
     <li>Delete one child profile in the parent area, behind the parental gate. That removes that profile from the device.</li>
     <li>Remove the app. That removes the app's local data.</li>
-    <li>Ask what we hold. Write to {CONTACT_LINK}. The design allows only one honest answer: we do not hold the child's information. Do not send a child's full name, date of birth, or a recording. We do not need them, and this draft has no secure place to put them.</li>
+    <li>Ask what we hold. Write to {CONTACT_LINK}. The design allows only one honest answer: we do not hold the child's information. Do not send a child's full name, date of birth, or a recording. We do not need them, and email is not a safe place for them.</li>
     <li>If you email us, you can ask us to delete your message. You can also contact your local data-protection authority.</li>
   </ul>
   <p>There is no password to reset and no cloud copy of progress.</p>
@@ -221,7 +221,7 @@ CHILDREN_BODY = f"""
 <section id="not-collected">
   <h2>Personal information</h2>
   <p>The operator does not collect personal information from children. The app does not send profile information, learning records, or device identifiers to the operator. It does not use the microphone and does not record audio. There is no Bridge Kids account and no Bridge Kids server.</p>
-  <p>The app can store a profile and a learning record on the device itself. That information is described in the next section so a parent can see it. It is not transmitted to us. Whether any law still treats that on-device storage as "collection" is a question for counsel before release. The App Store privacy form is planned as "Data Not Collected," and that answer has to be checked against this disclosure.</p>
+  <p>The app can store a profile and a learning record on the device itself. That information is described in the next section so a parent can see it. It is not transmitted to us. Whether any law still treats that on-device storage as "collection" is a question for counsel before release. The app's App Store privacy label is "Data Not Collected."</p>
 </section>
 
 <section id="on-device">
@@ -230,7 +230,7 @@ CHILDREN_BODY = f"""
   <ul>
     <li>a nickname, an avatar, an age band for a child aged 3–10, a learning direction, and an optional start date, for up to four profiles</li>
     <li>progress, a record of which words your child knows and is still practising, and collected stickers</li>
-    <li>parent-area settings, including the language (English or Japanese) and the daily play-time limit (one daily allowance per device), and today's play time</li>
+    <li>parent-area settings, including the language (English or Japanese) and the daily play-time limit (one shared daily allowance per device, for all child profiles), and today's play time</li>
   </ul>
   <p>A parent can see progress in the parent area. The app is free, so the child area does not show a price.</p>
 </section>
@@ -267,7 +267,7 @@ CHILDREN_BODY = f"""
   <h2>How to delete</h2>
   <ol>
     <li>Open the grown-ups area and complete the parental gate.</li>
-    <li>Delete the child profile. The labels in the app can still change before release. The action is profile deletion in the parent area. Deleting a profile removes that profile's nickname, avatar, age band, direction, start date, and learning record from the device.</li>
+    <li>Delete the child profile. The action is profile deletion in the parent area. Deleting a profile removes that profile's nickname, avatar, age band, direction, start date, and learning record from the device.</li>
     <li>Or remove the app from the device. That removes the app's local data, including every profile on that device.</li>
   </ol>
   <p>Steps for the parent area are on the <a href="support.html">support page</a>.</p>
@@ -310,7 +310,7 @@ SUPPORT_BODY = f"""
     <li>Open the grown-ups control from the child home or the progress map, and complete the gate.</li>
     <li>In the parent area, delete the profile you want to remove.</li>
   </ol>
-  <p>The exact button labels can still change before release. Deletion removes that profile's nickname, avatar, age band, learning direction, optional start date, and learning record from the device. Removing the whole app removes every profile's local data on that device.</p>
+  <p>Deletion removes that profile's nickname, avatar, age band, learning direction, optional start date, and learning record from the device. Removing the whole app removes every profile's local data on that device.</p>
 </section>
 
 <section id="offline">

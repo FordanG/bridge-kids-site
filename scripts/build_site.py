@@ -67,7 +67,7 @@ DOCUMENTS = (
         "Support",
         "Delete a profile, understand backups, and contact the publisher.",
     ),
-    ("terms.html", "Terms of use", "The draft license and App Store terms."),
+    ("terms.html", "Terms of use", "The license and App Store terms."),
 )
 
 
@@ -203,6 +203,14 @@ def pending_banner(native: str) -> str:
     )
 
 
+def public_description(description: str, published: tuple[str, str] | None) -> str:
+    """Drop the release-gated "Draft " meta prefix once the publication stamp is set."""
+    if published is not None and description.startswith("Draft "):
+        rest = description[len("Draft ") :]
+        return rest[:1].upper() + rest[1:]
+    return description
+
+
 def page(
     *,
     title: str,
@@ -218,6 +226,7 @@ def page(
     locale_note: str,
     published: tuple[str, str] | None = None,
 ) -> str:
+    description = public_description(description, published)
     alternate_block = f"\n{alternates}" if alternates else ""
     locale_block = f"\n{locale_note}" if locale_note else ""
     pending_block = f"\n{pending}" if pending else ""

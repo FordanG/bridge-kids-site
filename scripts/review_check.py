@@ -34,9 +34,14 @@ A missing OK or a missing date fails. That sign-off is the human gate
 for the legal pages. Per-page human_verified is optional. The same
 command fails while a launch page still contains the postal-address
 placeholder, the unpublished telephone line, the governing-law
-sentence, or the retention-confirmation note. When both checklist
-fields are set, the built pages must no longer carry the draft banner
-and must show that effective date. Until then the draft banners stay.
+sentence, or the retention-confirmation note. It also fails on any
+case-insensitive draft, TODO, placeholder, not finished, or
+"question for counsel" in visible text, the title, or the meta
+description, on every HTML page. A meta description that still starts
+with "Draft " fails the same way. When both checklist fields are set,
+the built pages must no longer carry the draft banner, must drop that
+meta prefix, and must show that effective date. Until then the draft
+banners stay. The default run does not apply this word scan.
 
 reviewer == author fails, except PRD §12.8 exception (b): a ja page
 authored by ai-ja-reviewer, first passed as ai_reviewed by
@@ -795,6 +800,10 @@ def check_tree(
                 release=release,
             )
         )
+    if release:
+        from check_site import release_text_errors
+
+        errors.extend(release_text_errors(root))
     return errors, notices
 
 
@@ -1109,6 +1118,39 @@ def fixture_publication_banner() -> list[str]:
         failures.append("published build should strip the banner and fill the effective date")
     if live.count("23 October 2026") < 2:
         failures.append("published build should use the effective date for both dates")
+    kept = build_site.page(
+        title="T",
+        description="Draft privacy policy for Bridge Kids.",
+        heading="H",
+        body="<p>Body</p>",
+        css_href="css/site.css",
+        icon_prefix="",
+        brand_href="index.html",
+        header_nav="",
+        pending="",
+        alternates="",
+        locale_note="",
+    )
+    if 'content="Draft privacy policy for Bridge Kids."' not in kept:
+        failures.append("draft build should keep the Draft meta prefix")
+    published = build_site.page(
+        title="T",
+        description="Draft privacy policy for Bridge Kids.",
+        heading="H",
+        body="<p>Body</p>",
+        css_href="css/site.css",
+        icon_prefix="",
+        brand_href="index.html",
+        header_nav="",
+        pending="",
+        alternates="",
+        locale_note="",
+        published=("2026-10-23", "23 October 2026"),
+    )
+    if 'content="Draft ' in published:
+        failures.append("published build should drop the Draft meta prefix")
+    if 'content="Privacy policy for Bridge Kids."' not in published:
+        failures.append("published build should capitalize the description after dropping Draft")
     return failures
 
 

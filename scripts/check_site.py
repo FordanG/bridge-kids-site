@@ -8,11 +8,18 @@ mailto address, if HTML links or fragments are broken, or if the
 locale contract is wrong.
 
 Valid HTML is checked separately with the Nu Html Checker in CI.
+
+`python3 scripts/check_site.py --release` also fails when visible page
+text, the title, or the meta description still contains draft, TODO,
+placeholder, not finished, or "question for counsel", or when a meta
+description still starts with "Draft ". The default run does not.
 """
 
 from __future__ import annotations
 
 import json
+import re
+import shutil
 import sys
 import tempfile
 from html.parser import HTMLParser
@@ -341,9 +348,8 @@ def required_phrase_errors(relative: str, text: str, launch: set[str]) -> list[s
         if f"<!-- {EMAIL_RETENTION_NOTE} -->" not in text:
             errors.append(f"{relative}: missing the email-retention confirmation comment")
     if in_locale_folder and page_id == "privacy":
-        for snippet in ("GitHub Pages", "do not use them for tracking"):
-            if snippet not in text:
-                errors.append(f"{relative}: missing the host-log disclosure ({snippet})")
+        if "do not use them for tracking" not in text:
+            errors.append(f"{relative}: missing the host-log disclosure")
     return errors
 
 
@@ -384,6 +390,10 @@ def check_contract(root: Path) -> list[str]:
             errors.append(f"{relative}: still contains the contact-email placeholder")
         if "{{EMAIL_RETENTION_PERIOD}}" in text:
             errors.append(f"{relative}: still contains the email-retention placeholder")
+        if "fordang.github.io" in text or "hosted by GitHub Pages" in text:
+            errors.append(
+                f"{relative}: names a site host that deploy config does not set"
+            )
         lowered = text.lower()
         for phrase in FORBIDDEN_PHRASES:
             if phrase in lowered:
@@ -397,6 +407,328 @@ def check_tree(root: Path, *, contract: bool) -> list[str]:
     if contract:
         errors.extend(check_contract(root))
     return errors
+
+
+# Word matches, not raw substrings: "today" is not a TODO.
+RELEASE_TEXT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("draft", re.compile(r"(?<![A-Za-z])draft(?![A-Za-z])", re.I)),
+    ("todo", re.compile(r"(?<![A-Za-z])todo(?![A-Za-z])", re.I)),
+    ("placeholder", re.compile(r"(?<![A-Za-z])placeholder(?![A-Za-z])", re.I)),
+    ("not finished", re.compile(r"(?<![A-Za-z])not finished(?![A-Za-z])", re.I)),
+    ("question for counsel", re.compile(r"(?<![A-Za-z])question for counsel(?![A-Za-z])", re.I)),
+)
+GATED_MARKER_REPLACEMENTS = (
+    ("{{POSTAL_ADDRESS_IF_REQUIRED}}", "POSTAL_RESOLVED"),
+    ("Not published in this draft", "Telephone omitted"),
+    ("Governing law and venue are not chosen", "Governing law and venue remain unset"),
+    (
+        "retention period pending Gabriel's confirmation",
+        "retention period pending confirmation",
+    ),
+)
+
+
+class ReleaseSurfaceParser(HTMLParser):
+    """Body text, title text, and meta descriptions. Comments and attributes are out."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.body_parts: list[str] = []
+        self.title_parts: list[str] = []
+        self.descriptions: list[str] = []
+        self.in_body = False
+        self.in_title = False
+        self.skip = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "body":
+            self.in_body = True
+        if tag in {"script", "style"}:
+            self.skip += 1
+        if tag == "title":
+            self.in_title = True
+        if tag == "meta":
+            named = {key.lower(): value or "" for key, value in attrs}
+            if named.get("name", "").lower() == "description":
+                self.descriptions.append(named.get("content", ""))
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in {"script", "style"} and self.skip:
+            self.skip -= 1
+        if tag == "body":
+            self.in_body = False
+        if tag == "title":
+            self.in_title = False
+
+    def handle_data(self, data: str) -> None:
+        if self.in_title:
+            self.title_parts.append(data)
+        if self.in_body and self.skip == 0:
+            self.body_parts.append(data)
+
+
+def release_surface(html: str) -> tuple[str, list[str]]:
+    parser = ReleaseSurfaceParser()
+    parser.feed(html)
+    parser.close()
+    title = "".join(parser.title_parts)
+    body = "".join(parser.body_parts)
+    surface = "\n".join([title, *parser.descriptions, body])
+    return surface, parser.descriptions
+
+
+def release_text_errors(root: Path) -> list[str]:
+    """Case-insensitive draft words in visible text, title, and meta description."""
+    errors: list[str] = []
+    for path in html_files(root):
+        html = path.read_text(encoding="utf-8")
+        surface, descriptions = release_surface(html)
+        label = path.relative_to(root).as_posix()
+        for token, pattern in RELEASE_TEXT_PATTERNS:
+            if pattern.search(surface):
+                errors.append(
+                    f"{label}: release blocked by {token!r} in visible text, title, or meta description"
+                )
+        for description in descriptions:
+            if description.startswith("Draft "):
+                errors.append(f"{label}: meta description still starts with 'Draft '")
+    return errors
+
+
+def scrub_release_words(html: str) -> str:
+    """Replace gated words in text nodes, titles, and meta descriptions."""
+
+    def scrub_piece(piece: str) -> str:
+        for _token, pattern in RELEASE_TEXT_PATTERNS:
+            piece = pattern.sub("ok", piece)
+        return piece
+
+    def scrub_tag(tag: str) -> str:
+        if not tag.lower().startswith("<meta") or "description" not in tag.lower():
+            return tag
+
+        def repl(match: re.Match[str]) -> str:
+            return match.group(1) + scrub_piece(match.group(2)) + match.group(3)
+
+        return re.sub(r'(content=")(.*?)(")', repl, tag, count=1, flags=re.S)
+
+    parts = re.split(r"(<!--.*?-->|<[^>]*>)", html, flags=re.S)
+    cleaned: list[str] = []
+    for part in parts:
+        if part.startswith("<!--"):
+            cleaned.append(part)
+        elif part.startswith("<"):
+            cleaned.append(scrub_tag(part))
+        else:
+            cleaned.append(scrub_piece(part))
+    return "".join(cleaned)
+
+
+def _launch_html_paths(root: Path) -> list[Path]:
+    paths = [root / "index.html", root / "404.html"]
+    english = root / "en"
+    if english.is_dir():
+        paths.extend(sorted(english.glob("*.html")))
+    return [path for path in paths if path.is_file()]
+
+
+def _copy_html_tree(source: Path, dest: Path) -> None:
+    for path in html_files(source):
+        target = dest / path.relative_to(source)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, target)
+    review = source / "review.json"
+    if review.is_file():
+        shutil.copyfile(review, dest / "review.json")
+
+
+def _stage_marker_replaced_copy(source: Path, dest: Path) -> None:
+    """QA's simulation: Final Review OK, a date, and the four gated markers replaced."""
+    _copy_html_tree(source, dest)
+    for path in html_files(dest):
+        text = path.read_text(encoding="utf-8")
+        for old, new in GATED_MARKER_REPLACEMENTS:
+            text = text.replace(old, new)
+        path.write_text(text, encoding="utf-8")
+    effective = "<p>Effective date: 23 October 2026. Last updated: 23 October 2026.</p>\n"
+    for path in _launch_html_paths(dest):
+        text = path.read_text(encoding="utf-8")
+        text = text.replace(DRAFT_MARK, "")
+        if "Effective date:" not in text:
+            text = text.replace("</body>", effective + "</body>", 1)
+        path.write_text(text, encoding="utf-8")
+    _refresh_simulated_review(dest)
+
+
+def _refresh_simulated_review(dest: Path) -> None:
+    import review_check
+
+    review_file = dest / "review.json"
+    data = json.loads(review_file.read_text(encoding="utf-8"))
+    for record in data["records"]:
+        html = (dest / record["path"]).read_text(encoding="utf-8")
+        record["source_hash"] = review_check.source_hash(html)
+        if record.get("locale") == "en":
+            record["author"] = "ai-product-lead"
+            record["reviewer"] = "ai-ja-reviewer"
+            record["review_status"] = "ai_reviewed"
+            record["reviewed_at"] = "2026-10-23"
+            record["needs_native_check"] = False
+            record["self_verified"] = False
+    review_file.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    languages = data.get("release_languages")
+    checklist = dest / "release" / "checklist.json"
+    checklist.parent.mkdir(parents=True, exist_ok=True)
+    checklist.write_text(
+        json.dumps(
+            {
+                "site": {
+                    "final_review_ok": {
+                        "by": "human:gabriel",
+                        "date": "2026-10-23",
+                        "languages": languages,
+                    },
+                    "effective_date": "2026-10-23",
+                    "self_verified": [],
+                }
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def _release_check(dest: Path) -> tuple[list[str], list[str]]:
+    import review_check
+
+    return review_check.check_tree(
+        dest,
+        dest / "review.json",
+        release=True,
+        checklist_file=dest / "release" / "checklist.json",
+        ja_log_file=dest / "release" / "ja-review-log.json",
+    )
+
+
+def test_r2_markers_replaced_still_blocks_release_words() -> list[str]:
+    """After the four gated markers are gone, draft words still fail --release."""
+    failures: list[str] = []
+    expected = {
+        "en/privacy.html": (
+            "are not finished",
+            "Name the site host when a deploy target is configured.",
+        ),
+        "en/children.html": (
+            "are not finished",
+            "Please read it as a draft",
+            "question for counsel",
+        ),
+        "en/terms.html": (
+            "These are draft terms for the Bridge Kids app.",
+            "This draft does not name",
+            "TODO:",
+            "included here as a draft",
+            "This section is a draft",
+            "This draft does not choose",
+            "still a placeholder",
+        ),
+        "en/support.html": ("TODO:", "Leave the placeholder"),
+        "en/index.html": ("still a placeholder",),
+        "index.html": ("still a placeholder",),
+    }
+    with tempfile.TemporaryDirectory() as tmp:
+        dest = Path(tmp)
+        _stage_marker_replaced_copy(ROOT, dest)
+        for relative, phrases in expected.items():
+            surface, _descriptions = release_surface(
+                (dest / relative).read_text(encoding="utf-8")
+            )
+            for phrase in phrases:
+                if phrase not in surface:
+                    failures.append(f"{relative}: simulation dropped {phrase!r}")
+        for path in html_files(dest):
+            text = path.read_text(encoding="utf-8")
+            for old, _new in GATED_MARKER_REPLACEMENTS:
+                if old in text:
+                    failures.append(f"{path.name}: gated marker {old!r} was not replaced")
+        word_errors = release_text_errors(dest)
+        joined = "\n".join(word_errors)
+        for token in ("draft", "todo", "placeholder", "not finished", "question for counsel"):
+            if f"release blocked by {token!r}" not in joined:
+                failures.append(f"release scan should report {token!r}, got {word_errors}")
+        if "meta description still starts with 'Draft '" not in joined:
+            failures.append(f"Draft meta prefix should fail --release, got {word_errors}")
+        for relative in expected:
+            if not any(item.startswith(f"{relative}:") for item in word_errors):
+                failures.append(f"{relative} should still fail the release word scan")
+        errors, _notices = _release_check(dest)
+        other = [
+            item
+            for item in errors
+            if "release blocked by" not in item and "meta description still starts" not in item
+        ]
+        if other:
+            failures.append(
+                "expected only release-word failures after the four markers were replaced, "
+                f"got {other}"
+            )
+        if not any("release blocked by" in item for item in errors):
+            failures.append(f"--release should still fail, got {errors}")
+        draft_errors, _draft_notices = _release_check_mode(dest, release=False)
+        if any("release blocked by" in item or "Draft '" in item for item in draft_errors):
+            failures.append(f"draft mode should ignore the word scan, got {draft_errors}")
+    return failures
+
+
+def _release_check_mode(dest: Path, *, release: bool) -> tuple[list[str], list[str]]:
+    import review_check
+
+    return review_check.check_tree(
+        dest,
+        dest / "review.json",
+        release=release,
+        checklist_file=dest / "release" / "checklist.json",
+        ja_log_file=dest / "release" / "ja-review-log.json",
+    )
+
+
+def test_r2_clean_pages_pass_release_word_scan() -> list[str]:
+    """A copy with the gated words removed can pass --release."""
+    failures: list[str] = []
+    with tempfile.TemporaryDirectory() as tmp:
+        dest = Path(tmp)
+        sample = dest / "sample.html"
+        sample.write_text(
+            "<!DOCTYPE html><html><head><title>Ready</title>"
+            '<meta name="description" content="Ready page."></head>'
+            '<body><p class="draft">today\'s play time</p>'
+            "<!-- English draft TODO placeholder not finished --></body></html>",
+            encoding="utf-8",
+        )
+        if release_text_errors(dest):
+            failures.append("today, class=draft, and comments must not fail the release scan")
+        sample.unlink()
+        _stage_marker_replaced_copy(ROOT, dest)
+        for path in html_files(dest):
+            path.write_text(scrub_release_words(path.read_text(encoding="utf-8")), encoding="utf-8")
+        _refresh_simulated_review(dest)
+        privacy = (dest / "en" / "privacy.html").read_text(encoding="utf-8")
+        surface, _descriptions = release_surface(privacy)
+        if "today" not in surface:
+            failures.append("the clean scan should still allow today's play time")
+        if 'class="draft"' not in privacy:
+            failures.append("class=draft should remain an attribute and not be part of the scan")
+        comment = (dest / "ja" / "privacy.html").read_text(encoding="utf-8")
+        if "English draft" not in comment:
+            failures.append("an HTML comment may still say draft without failing --release")
+        word_errors = release_text_errors(dest)
+        if word_errors:
+            failures.append(f"clean pages should pass the release word scan, got {word_errors}")
+        errors, _notices = _release_check(dest)
+        if errors:
+            failures.append(f"clean pages should pass --release, got {errors}")
+    return failures
 
 
 def write_page(directory: Path, name: str, body: str) -> None:
@@ -508,10 +840,20 @@ def self_test() -> list[str]:
     )
     if held:
         failures.append(f"an excluded locale should skip phrase checks, got {held}")
+    if any("GitHub Pages" in item for item in en_errors):
+        failures.append("en privacy should not require a guessed GitHub Pages host")
+    failures.extend(test_r2_markers_replaced_still_blocks_release_words())
+    failures.extend(test_r2_clean_pages_pass_release_word_scan())
     return failures
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    args = list(sys.argv[1:] if argv is None else argv)
+    release = "--release" in args
+    unknown = [arg for arg in args if arg != "--release"]
+    if unknown:
+        print("Usage: python3 scripts/check_site.py [--release]", file=sys.stderr)
+        return 2
     failures = self_test()
     if failures:
         print("Checker self-test failed:", file=sys.stderr)
@@ -519,6 +861,8 @@ def main() -> int:
             print(f"  {failure}", file=sys.stderr)
         return 1
     errors = check_tree(ROOT, contract=True)
+    if release:
+        errors.extend(release_text_errors(ROOT))
     if errors:
         print(f"{len(errors)} site check(s) failed:", file=sys.stderr)
         for error in errors:
