@@ -14,11 +14,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "",
+      "notes": "Site ja copy v2 (2026-10-23 PHT) from en sha256:33b0095b1dd526fa72aaddea5084c23cb67b0820059c4467bbce7e213c5839ab (PR #3 a2a5bc7). Page record stays unreviewed until ai-ja-reviewer re-reviews the built page; block statuses are in the Doc.",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:67f896d0a06e971ed63a023d5c6306c9aaff57fe9f025b14455b11431d7bac98"
+      "source_hash": "sha256:9cdd1b3c442197bc7a897824c2adb239392f164955521dde20aa663dfb0b235f"
     },
     {
       "locale": "ja",
@@ -27,11 +27,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "",
+      "notes": "Site ja copy v2 (2026-10-23 PHT) from en sha256:aae118f47ee7c4cd63e95fa6b5e25cbedf5d784a81e8f70a9a2bff04b1bfb95c (PR #3 a2a5bc7). Page record stays unreviewed until ai-ja-reviewer re-reviews the built page; block statuses are in the Doc. Flagged blocks: #laws (C-03).",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:8c1f972e6d5c3c7909e81e06654aeedd375843577cf53f89cd7d80386e6ee1db"
+      "source_hash": "sha256:383d9c03d71e4b9628a491d11312467ab234cd488549d2a727f23ba4490e2ee6"
     },
     {
       "locale": "ja",
@@ -40,11 +40,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "",
+      "notes": "Site ja copy v2 (2026-10-23 PHT) from en sha256:0f5518ce824735030272898e9f5a0da2acb0e44ea77639b6533b8eb586e6d708 (PR #3 a2a5bc7). Page record stays unreviewed until ai-ja-reviewer re-reviews the built page; block statuses are in the Doc. Flagged blocks: #identifiers (C-03).",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:1eb13953b46c5587dc9cf0e9b08d1c05922cbe8dd19b025c63223ac9698ff434"
+      "source_hash": "sha256:50014236e54bbdeaac207c79e2dd15da362169b800cb004654e8ddd7f3692742"
     },
     {
       "locale": "ja",
@@ -53,11 +53,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "",
+      "notes": "Site ja copy v2 (2026-10-23 PHT) from en sha256:a420c9a3cd1b8399cff26b8e04e3180cd7e9bbf23bbe6d8296982d1029dd414a (PR #3 a2a5bc7). Page record stays unreviewed until ai-ja-reviewer re-reviews the built page; block statuses are in the Doc.",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:daedafa504aa3aae516efc0d6ac2db4c7783a0e11f9707c463e0bedb880116a3"
+      "source_hash": "sha256:0b432e8c0310488a504a3f7c507f0e44609746a3fa65750cc46622696c0f94e4"
     },
     {
       "locale": "ja",
@@ -66,11 +66,11 @@
       "author": "ai-product-lead",
       "reviewer": null,
       "reviewed_at": null,
-      "notes": "",
+      "notes": "Site ja copy v2 (2026-10-23 PHT) from en sha256:9efe8fd443833388d119fcd55d8f72e9a8feca66e5eef9b78c17ee07f78bc548 (PR #3 a2a5bc7). Page record stays unreviewed until ai-ja-reviewer re-reviews the built page; block statuses are in the Doc. Flagged blocks: #apple (C-06), #privacy (C-04), #liability (C-05).",
       "review_status": "unreviewed",
       "needs_native_check": true,
       "self_verified": false,
-      "source_hash": "sha256:99dc6b5d10007f231ea53a6f1013d0b59a6f5d5b545255eba1ff1d1243862892"
+      "source_hash": "sha256:691781899c4cd6f54dd6523b4092f360ad17cf9087be3ce0b7e872c86d9ede21"
     },
     {
       "locale": "en",

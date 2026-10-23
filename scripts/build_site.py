@@ -30,6 +30,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from content import PAGE_BODIES, PAGE_DESCRIPTIONS  # noqa: E402
+import content_ja as ja  # noqa: E402
 from site_map import (  # noqa: E402
     CONTACT_ADDRESS,
     CONTACT_MAILTO,
@@ -118,6 +119,7 @@ def release_rows() -> list[tuple[str, str, str]]:
 
 
 def language_nav(page_file: str, current_locale: str | None, from_root: bool) -> str:
+    is_ja = current_locale == "ja"
     items: list[str] = []
     linked = {code for code, _native, _english in release_rows()}
     for code, native, english in release_rows():
@@ -134,20 +136,23 @@ def language_nav(page_file: str, current_locale: str | None, from_root: bool) ->
     held = ""
     if current_locale is not None and current_locale not in linked:
         held = (
-            "<p>This language is not part of the current release "
-            "and is not linked from the launch pages.</p>"
+            f"<p>{esc(ja.CHROME_JA['held'])}</p>"
+            if is_ja
+            else (
+                "<p>This language is not part of the current release "
+                "and is not linked from the launch pages.</p>"
+            )
         )
-    return (
-        '<nav class="languages" aria-label="Languages">'
-        "<p>Languages</p><ul>"
-        + "".join(items)
-        + "</ul>"
-        + held
-        + "</nav>"
+    nav_open = (
+        f'<nav class="languages" aria-label="{esc(ja.CHROME_JA["languages"])}">'
+        f"<p>{esc(ja.CHROME_JA['languages'])}</p><ul>"
+        if is_ja
+        else '<nav class="languages" aria-label="Languages"><p>Languages</p><ul>'
     )
+    return nav_open + "".join(items) + "</ul>" + held + "</nav>"
 
 
-def document_nav(current_page: str) -> str:
+def document_nav(current_page: str, locale: str = "en") -> str:
     labels = {
         "index": "Home",
         "privacy": "Privacy",
@@ -155,18 +160,21 @@ def document_nav(current_page: str) -> str:
         "support": "Support",
         "terms": "Terms",
     }
+    if locale == "ja":
+        labels = ja.DOC_NAV_LABELS_JA
     items: list[str] = []
     for page_id in PAGE_IDS:
         current = ' aria-current="page"' if page_id == current_page else ""
         items.append(
             f'<li><a href="{page_id}.html"{current}>{esc(labels[page_id])}</a></li>'
         )
-    return (
-        '<nav class="documents" aria-label="Documents">'
-        "<p>Documents</p><ul>"
-        + "".join(items)
-        + "</ul></nav>"
+    nav_open = (
+        f'<nav class="documents" aria-label="{esc(ja.CHROME_JA["documents"])}">'
+        f"<p>{esc(ja.CHROME_JA['documents'])}</p><ul>"
+        if locale == "ja"
+        else '<nav class="documents" aria-label="Documents"><p>Documents</p><ul>'
     )
+    return nav_open + "".join(items) + "</ul></nav>"
 
 
 def document_list(prefix: str) -> str:
@@ -225,11 +233,14 @@ def page(
     alternates: str,
     locale_note: str,
     published: tuple[str, str] | None = None,
+    lang: str = "en",
+    notice: str = "",
 ) -> str:
     description = public_description(description, published)
     alternate_block = f"\n{alternates}" if alternates else ""
     locale_block = f"\n{locale_note}" if locale_note else ""
     pending_block = f"\n{pending}" if pending else ""
+    chrome = ja.CHROME_JA if lang == "ja" else None
     if published is None:
         draft_comment = f"<!-- {DRAFT_MARK} -->\n"
         draft_banner = (
@@ -244,6 +255,11 @@ def page(
             f"<p><time datetime=\"{UPDATED}\">{esc(UPDATED_LABEL)}</time>. "
             f"{esc(DRAFT_MARK)}. This is not a final legal document.</p>"
         )
+        if chrome:
+            dated_time = f'<time datetime="{UPDATED}">{ja.ja_date_label(UPDATED)}</time>'
+            draft_banner = f'<p class="draft">{esc(chrome["draft_banner"])}</p>\n'
+            dated = "<p>" + chrome["dated"].format(date=dated_time) + "</p>"
+            footer_date = "<p>" + chrome["footer_draft"].format(date=dated_time) + "</p>"
     else:
         iso, label = published
         draft_comment = ""
@@ -253,8 +269,25 @@ def page(
             f'Last updated: <time datetime="{esc_attr(iso)}">{esc(label)}</time>.</p>'
         )
         footer_date = dated
+        if chrome:
+            dated_time = (
+                f'<time datetime="{esc_attr(iso)}">{ja.ja_date_label(iso)}</time>'
+            )
+            dated = (
+                "<p>"
+                + chrome["published"].format(effective=dated_time, updated=dated_time)
+                + "</p>"
+            )
+            footer_date = dated
+    notice_block = f"\n{notice}" if notice else ""
+    skip = chrome["skip"] if chrome else "Skip to content"
+    publisher = (
+        chrome["footer_publisher"]
+        if chrome
+        else "Bridge Kids is published by Gabriel John Fordan, an individual developer."
+    )
     return f"""<!DOCTYPE html>
-<html lang="en" translate="no">
+<html lang="{lang}" translate="no">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -270,18 +303,18 @@ def page(
 </head>
 <body>
 {draft_comment}<!-- Generated by scripts/build_site.py. Edit the sources under scripts/ and run the generator again. -->{locale_block}
-<a class="skip" href="#content">Skip to content</a>
+<a class="skip" href="#content">{skip}</a>
 <header class="wrap">
 <p class="brand"><a href="{brand_href}">Bridge Kids</a></p>
 {draft_banner}{header_nav}
 </header>
 <main class="wrap" id="content">{pending_block}
 <h1>{esc(heading)}</h1>
-{dated}
+{dated}{notice_block}
 {body.strip()}
 </main>
 <footer class="wrap">
-<p>Bridge Kids is published by Gabriel John Fordan, an individual developer.</p>
+<p>{publisher}</p>
 {footer_date}
 </footer>
 </body>
@@ -335,13 +368,16 @@ def render_locale(
     published: tuple[str, str] | None,
 ) -> str:
     page_file = f"{page_id}.html"
-    if page_id == "index":
+    is_ja = code == "ja"
+    if is_ja:
+        body = ja.INDEX_BODY_JA if page_id == "index" else ja.PAGE_BODIES_JA[page_id]
+    elif page_id == "index":
         body = locale_index_body()
     else:
         body = PAGE_BODIES[page_id]
     pending = ""
     locale_note = ""
-    if code != "en":
+    if code not in ("en", "ja"):
         pending = pending_banner(native)
         locale_note = (
             f"<!-- Locale folder: {code}. The visible text is the English draft. "
@@ -350,11 +386,11 @@ def render_locale(
             f"translator. When that copy replaces this text, set the html lang "
             f"attribute to {code}. -->"
         )
-    header = language_nav(page_file, code, False) + "\n" + document_nav(page_id)
+    header = language_nav(page_file, code, False) + "\n" + document_nav(page_id, code)
     return page(
-        title=TITLES[page_id],
-        description=PAGE_DESCRIPTIONS[page_id],
-        heading=heading,
+        title=ja.TITLES_JA[page_id] if is_ja else TITLES[page_id],
+        description=ja.PAGE_DESCRIPTIONS_JA[page_id] if is_ja else PAGE_DESCRIPTIONS[page_id],
+        heading=ja.HEADINGS_JA[page_id] if is_ja else heading,
         body=body,
         css_href="../css/site.css",
         icon_prefix="../",
@@ -364,6 +400,8 @@ def render_locale(
         alternates=alternate_links(page_file),
         locale_note=locale_note,
         published=published,
+        lang="ja" if is_ja else "en",
+        notice=ja.PREVAILS_NOTICE_HTML if is_ja and page_id in ja.PREVAILS_NOTICE_PAGES else "",
     )
 
 

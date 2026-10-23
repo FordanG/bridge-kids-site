@@ -30,6 +30,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+from content_ja import RELEASE_BANNED_PHRASES_JA  # noqa: E402
 from site_map import (  # noqa: E402
     CONTACT_ADDRESS,
     CONTACT_MAILTO,
@@ -353,6 +354,26 @@ def required_phrase_errors(relative: str, text: str, launch: set[str]) -> list[s
     return errors
 
 
+def locale_of(relative: str) -> str | None:
+    parts = Path(relative).parts
+    if len(parts) == 2 and parts[0] in LOCALE_CODES:
+        return parts[0]
+    return None
+
+
+def pending_banner_errors(relative: str, text: str) -> list[str]:
+    """Non-English pages need the translation banner. Japanese is authored, so it does not."""
+    locale = locale_of(relative)
+    if locale is not None and locale not in {"en", "ja"}:
+        if PENDING_MARK not in text:
+            return [f"{relative}: missing the {PENDING_MARK} banner"]
+        return []
+    if PENDING_MARK in text:
+        who = "Japanese" if locale == "ja" else "English"
+        return [f"{relative}: {who} page must not say {PENDING_MARK}"]
+    return []
+
+
 def check_contract(root: Path) -> list[str]:
     errors: list[str] = []
     found = {path.relative_to(root).as_posix() for path in html_files(root)}
@@ -379,21 +400,17 @@ def check_contract(root: Path) -> list[str]:
                 errors.append(f"{relative}: draft mark must appear as an HTML comment")
         elif DRAFT_MARK in text:
             errors.append(f"{relative}: draft mark must be removed once the effective date is set")
-        parts = Path(relative).parts
-        locale = parts[0] if len(parts) == 2 and parts[0] in LOCALE_CODES else None
-        if locale is not None and locale != "en":
-            if PENDING_MARK not in text:
-                errors.append(f"{relative}: missing the {PENDING_MARK} banner")
-        elif PENDING_MARK in text:
-            errors.append(f"{relative}: English page must not say {PENDING_MARK}")
+        errors.extend(pending_banner_errors(relative, text))
+        if locale_of(relative) != "ja" and (
+            "fordang.github.io" in text or "hosted by GitHub Pages" in text
+        ):
+            errors.append(
+                f"{relative}: names a site host that deploy config does not set"
+            )
         if "{{CONTACT_EMAIL}}" in text:
             errors.append(f"{relative}: still contains the contact-email placeholder")
         if "{{EMAIL_RETENTION_PERIOD}}" in text:
             errors.append(f"{relative}: still contains the email-retention placeholder")
-        if "fordang.github.io" in text or "hosted by GitHub Pages" in text:
-            errors.append(
-                f"{relative}: names a site host that deploy config does not set"
-            )
         lowered = text.lower()
         for phrase in FORBIDDEN_PHRASES:
             if phrase in lowered:
@@ -416,6 +433,10 @@ RELEASE_TEXT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("placeholder", re.compile(r"(?<![A-Za-z])placeholder(?![A-Za-z])", re.I)),
     ("not finished", re.compile(r"(?<![A-Za-z])not finished(?![A-Za-z])", re.I)),
     ("question for counsel", re.compile(r"(?<![A-Za-z])question for counsel(?![A-Za-z])", re.I)),
+    *(
+        (phrase, re.compile(re.escape(phrase)))
+        for phrase in RELEASE_BANNED_PHRASES_JA
+    ),
 )
 GATED_MARKER_REPLACEMENTS = (
     ("{{POSTAL_ADDRESS_IF_REQUIRED}}", "POSTAL_RESOLVED"),
@@ -611,6 +632,42 @@ def _release_check(dest: Path) -> tuple[list[str], list[str]]:
     )
 
 
+def test_ja_release_banned_phrases() -> list[str]:
+    """Japanese draft words fail --release, and ja does not need the translation banner."""
+    failures: list[str] = []
+    if pending_banner_errors("ja/privacy.html", "<html><body><p>本文</p></body></html>"):
+        failures.append("an authored ja page should not need the translation-pending banner")
+    ja_banner = pending_banner_errors(
+        "ja/privacy.html",
+        f"<html><body><p>{PENDING_MARK}</p></body></html>",
+    )
+    if not ja_banner:
+        failures.append("ja must not show the translation-pending banner")
+    held = pending_banner_errors("zh-Hans/privacy.html", "<html><body><p>English draft</p></body></html>")
+    if not any(PENDING_MARK in item for item in held):
+        failures.append("a non-ja excluded locale should still require the translation banner")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        page = root / "sample.html"
+        page.write_text(
+            "<!DOCTYPE html><html lang=\"ja\"><head><title>確認</title>"
+            '<meta name="description" content="確認ページです。"></head>'
+            "<body><p>本日の利用時間です。</p></body></html>",
+            encoding="utf-8",
+        )
+        if release_text_errors(root):
+            failures.append("ordinary Japanese text should pass the release word scan")
+        for phrase in RELEASE_BANNED_PHRASES_JA:
+            page.write_text(
+                f"<!DOCTYPE html><html><body><p>{phrase}</p></body></html>",
+                encoding="utf-8",
+            )
+            errors = release_text_errors(root)
+            if not any(phrase in item for item in errors):
+                failures.append(f"release scan should report {phrase!r}, got {errors}")
+    return failures
+
+
 def test_r2_markers_replaced_still_blocks_release_words() -> list[str]:
     """After the four gated markers are gone, draft words still fail --release."""
     failures: list[str] = []
@@ -719,7 +776,7 @@ def test_r2_clean_pages_pass_release_word_scan() -> list[str]:
             failures.append("the clean scan should still allow today's play time")
         if 'class="draft"' not in privacy:
             failures.append("class=draft should remain an attribute and not be part of the scan")
-        comment = (dest / "ja" / "privacy.html").read_text(encoding="utf-8")
+        comment = (dest / "zh-Hans" / "privacy.html").read_text(encoding="utf-8")
         if "English draft" not in comment:
             failures.append("an HTML comment may still say draft without failing --release")
         word_errors = release_text_errors(dest)
@@ -842,6 +899,7 @@ def self_test() -> list[str]:
         failures.append(f"an excluded locale should skip phrase checks, got {held}")
     if any("GitHub Pages" in item for item in en_errors):
         failures.append("en privacy should not require a guessed GitHub Pages host")
+    failures.extend(test_ja_release_banned_phrases())
     failures.extend(test_r2_markers_replaced_still_blocks_release_words())
     failures.extend(test_r2_clean_pages_pass_release_word_scan())
     return failures
