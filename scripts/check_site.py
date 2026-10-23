@@ -12,6 +12,7 @@ Valid HTML is checked separately with the Nu Html Checker in CI.
 
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 from html.parser import HTMLParser
@@ -53,6 +54,19 @@ BANNED_TAGS = frozenset(
     {"script", "iframe", "object", "embed", "applet", "base", "form"}
 )
 URL_ATTRS = ("href", "src", "action", "data", "poster", "srcset")
+
+# Required phrases for locales that are actually launched.
+# Japanese phrases are added when the product lead's ja copy lands.
+# Excluded locales are skipped. English phrases are never required
+# on a non-English page.
+LOCALE_PHRASES: dict[str, tuple[tuple[str, frozenset[str]], ...]] = {
+    "en": (
+        ("children aged 3–10", frozenset({"index", "privacy", "children", "support", "terms"})),
+        (EMAIL_RETENTION_LINE, LEGAL_PAGE_IDS),
+        ("IP address", frozenset({"privacy"})),
+        ("user agent", frozenset({"privacy"})),
+    ),
+}
 
 
 class Collector(HTMLParser):
@@ -273,6 +287,66 @@ def check_documents(root: Path) -> list[str]:
     return errors
 
 
+def launch_locales(root: Path) -> set[str]:
+    review = root / "review.json"
+    if not review.is_file():
+        return {"en"}
+    try:
+        data = json.loads(review.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {"en"}
+    from review_check import parse_release_languages
+
+    languages, errors = parse_release_languages(data if isinstance(data, dict) else {})
+    if errors or not languages:
+        return {"en"}
+    return set(languages)
+
+
+def drafts_are_required(root: Path, launch: set[str]) -> bool:
+    from review_check import publication_stamp
+
+    return publication_stamp(root / "release" / "checklist.json", sorted(launch)) is None
+
+
+def required_phrase_errors(relative: str, text: str, launch: set[str]) -> list[str]:
+    """Phrases for one page. Excluded locales and unknown locale tables are skipped."""
+    parts = Path(relative).parts
+    page_id = Path(relative).stem
+    if len(parts) == 2 and parts[0] in LOCALE_CODES:
+        phrase_locale: str | None = parts[0]
+        in_locale_folder = True
+    elif relative in ROOT_HTML:
+        phrase_locale = "en"
+        in_locale_folder = False
+    else:
+        return []
+    if phrase_locale not in launch:
+        return []
+    errors: list[str] = []
+    for phrase, pages in LOCALE_PHRASES.get(phrase_locale, ()):
+        if page_id not in pages:
+            continue
+        present = phrase in text or (
+            phrase == "children aged 3–10" and "children aged 3-10" in text
+        )
+        if not present:
+            errors.append(f"{relative}: missing required phrase {phrase!r}")
+    if phrase_locale != "en":
+        return errors
+    if in_locale_folder and page_id in LEGAL_PAGE_IDS:
+        for token in (POSTAL_ADDRESS, "TODO", CONTACT_MAILTO, CONTACT_ADDRESS):
+            if token not in text:
+                errors.append(f"{relative}: missing {token}")
+        if f"<!-- {EMAIL_RETENTION_NOTE} -->" not in text:
+            errors.append(f"{relative}: missing the email-retention confirmation comment")
+    if in_locale_folder and page_id == "privacy":
+        for snippet in ("GitHub Pages", "do not use them for tracking"):
+            if snippet not in text:
+                errors.append(f"{relative}: missing the host-log disclosure ({snippet})")
+    return errors
+
+
 def check_contract(root: Path) -> list[str]:
     errors: list[str] = []
     found = {path.relative_to(root).as_posix() for path in html_files(root)}
@@ -287,13 +361,18 @@ def check_contract(root: Path) -> list[str]:
     for relative in extra:
         errors.append(f"unexpected HTML file {relative}")
 
+    launch = launch_locales(root)
+    drafts_required = drafts_are_required(root, launch)
     for path in html_files(root):
         relative = path.relative_to(root).as_posix()
         text = path.read_text(encoding="utf-8")
-        if DRAFT_MARK not in text:
-            errors.append(f"{relative}: missing the draft mark in an HTML comment")
-        if f"<!-- {DRAFT_MARK} -->" not in text:
-            errors.append(f"{relative}: draft mark must appear as an HTML comment")
+        if drafts_required:
+            if DRAFT_MARK not in text:
+                errors.append(f"{relative}: missing the draft mark in an HTML comment")
+            if f"<!-- {DRAFT_MARK} -->" not in text:
+                errors.append(f"{relative}: draft mark must appear as an HTML comment")
+        elif DRAFT_MARK in text:
+            errors.append(f"{relative}: draft mark must be removed once the effective date is set")
         parts = Path(relative).parts
         locale = parts[0] if len(parts) == 2 and parts[0] in LOCALE_CODES else None
         if locale is not None and locale != "en":
@@ -305,31 +384,11 @@ def check_contract(root: Path) -> list[str]:
             errors.append(f"{relative}: still contains the contact-email placeholder")
         if "{{EMAIL_RETENTION_PERIOD}}" in text:
             errors.append(f"{relative}: still contains the email-retention placeholder")
-        page_id = Path(relative).stem
         lowered = text.lower()
         for phrase in FORBIDDEN_PHRASES:
             if phrase in lowered:
                 errors.append(f"{relative}: contains {phrase!r}")
-        if page_id in {"index", "privacy", "children", "support", "terms"}:
-            if "children aged 3–10" not in text and "children aged 3-10" not in text:
-                errors.append(f"{relative}: must describe the app as for children aged 3–10")
-        if locale is not None and page_id in LEGAL_PAGE_IDS:
-            for token in (POSTAL_ADDRESS, "TODO", CONTACT_MAILTO, CONTACT_ADDRESS):
-                if token not in text:
-                    errors.append(f"{relative}: missing {token}")
-            if EMAIL_RETENTION_LINE not in text:
-                errors.append(f"{relative}: missing the email retention line")
-            if f"<!-- {EMAIL_RETENTION_NOTE} -->" not in text:
-                errors.append(f"{relative}: missing the email-retention confirmation comment")
-        if page_id == "privacy":
-            for snippet in (
-                "GitHub Pages",
-                "IP address",
-                "user agent",
-                "do not use them for tracking",
-            ):
-                if snippet not in text:
-                    errors.append(f"{relative}: missing the host-log disclosure ({snippet})")
+        errors.extend(required_phrase_errors(relative, text, launch))
     return errors
 
 
@@ -433,6 +492,22 @@ def self_test() -> list[str]:
         "disallowed CSS",
         css='@import "https://example.com/font.css";\n',
     )
+    ja_text = "<html><body><p>これは下書きです。</p></body></html>"
+    if required_phrase_errors("ja/privacy.html", ja_text, {"en"}):
+        failures.append("excluded ja pages should skip English phrase checks")
+    if required_phrase_errors("ja/privacy.html", ja_text, {"en", "ja"}):
+        failures.append("ja must not be checked for English phrases before its own table exists")
+    en_errors = required_phrase_errors("en/privacy.html", "<html><body><p>Hello</p></body></html>", {"en"})
+    for phrase in ("children aged 3–10", EMAIL_RETENTION_LINE, "IP address", "user agent"):
+        if not any(phrase in item for item in en_errors):
+            failures.append(f"en privacy should require {phrase!r}, got {en_errors}")
+    held = required_phrase_errors(
+        "zh-Hans/terms.html",
+        "<html><body><p>Hello</p></body></html>",
+        {"en"},
+    )
+    if held:
+        failures.append(f"an excluded locale should skip phrase checks, got {held}")
     return failures
 
 

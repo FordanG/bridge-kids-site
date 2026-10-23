@@ -3,8 +3,15 @@
 
 Edit scripts/content.py and run this file again. The HTML in the locale
 folders is generated so every language stays in step. Non-English pages
-repeat the English draft and add a translation-pending banner. This
-script does not translate.
+repeat the English draft and add a translation-pending banner. A copy
+in another language is an AI draft by the product lead, taken to
+ai_verified by that language's reviewer. There is no separate human
+translator. This script does not translate.
+
+Draft banners and the "Draft dated" line stay until release/checklist.json
+has both Gabriel's Final Review OK and site.effective_date. When both
+are set, this script removes the banners and writes that date as the
+effective date and the last-updated date.
 
 Usage:
   python3 scripts/build_site.py
@@ -37,6 +44,7 @@ from site_map import (  # noqa: E402
 
 ROOT = SCRIPT_DIR.parent
 REVIEW_PATH = ROOT / "review.json"
+CHECKLIST_PATH = ROOT / "release" / "checklist.json"
 
 TITLES = {
     "index": "Bridge Kids – Privacy, support, and terms",
@@ -57,7 +65,7 @@ DOCUMENTS = (
     (
         "support.html",
         "Support",
-        "Delete a profile, understand speech and backups, and contact the publisher.",
+        "Delete a profile, understand backups, and contact the publisher.",
     ),
     ("terms.html", "Terms of use", "The draft license and App Store terms."),
 )
@@ -72,7 +80,11 @@ def esc_attr(value: str) -> str:
 
 
 def release_codes() -> list[str]:
-    """Locales linked at launch. The list lives in review.json."""
+    """Locales linked at launch. The list lives in review.json.
+
+    English is required. Japanese is re-added when the ai_verified ja
+    copy lands; until then it may be absent and is not linked.
+    """
     try:
         data = json.loads(REVIEW_PATH.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -85,12 +97,18 @@ def release_codes() -> list[str]:
         or any(not isinstance(code, str) or code not in known for code in codes)
         or len(set(codes)) != len(codes)
         or "en" not in codes
-        or "ja" not in codes
     ):
         raise SystemExit(
-            "review.json: release_languages must list known locales and include en and ja"
+            "review.json: release_languages must list known locales and include en"
         )
     return codes
+
+
+def current_publication_stamp() -> tuple[str, str] | None:
+    """Effective date label once Final Review OK and site.effective_date are both set."""
+    from review_check import publication_stamp
+
+    return publication_stamp(CHECKLIST_PATH, release_codes())
 
 
 def release_rows() -> list[tuple[str, str, str]]:
@@ -172,13 +190,14 @@ def alternate_links(page_file: str) -> str:
     return "\n".join(links)
 
 
-def pending_banner(code: str, native: str) -> str:
+def pending_banner(native: str) -> str:
     return (
         '<div class="pending">'
         f"<p><strong>{esc(PENDING_MARK)}.</strong> "
-        "This page is in English. A human translation into "
-        f'<span lang="{esc(code)}">{esc(native)}</span> '
-        "has not been written or reviewed. This is not a translation. "
+        "This page still shows the English draft. "
+        f"The {esc(native)} copy is an AI draft by the product lead "
+        "and is taken to ai_verified by the JA reviewer. "
+        "There is no separate human translator. "
         "Do not use a machine translation of this page as the policy.</p>"
         "</div>"
     )
@@ -197,10 +216,34 @@ def page(
     pending: str,
     alternates: str,
     locale_note: str,
+    published: tuple[str, str] | None = None,
 ) -> str:
     alternate_block = f"\n{alternates}" if alternates else ""
     locale_block = f"\n{locale_note}" if locale_note else ""
     pending_block = f"\n{pending}" if pending else ""
+    if published is None:
+        draft_comment = f"<!-- {DRAFT_MARK} -->\n"
+        draft_banner = (
+            f'<p class="draft">{esc(DRAFT_MARK)}. This page is not a final legal document, '
+            "and it is not in force.</p>\n"
+        )
+        dated = (
+            f'<p>Draft dated <time datetime="{UPDATED}">{esc(UPDATED_LABEL)}</time>. '
+            "The English text is the source draft.</p>"
+        )
+        footer_date = (
+            f"<p><time datetime=\"{UPDATED}\">{esc(UPDATED_LABEL)}</time>. "
+            f"{esc(DRAFT_MARK)}. This is not a final legal document.</p>"
+        )
+    else:
+        iso, label = published
+        draft_comment = ""
+        draft_banner = ""
+        dated = (
+            f'<p>Effective date: <time datetime="{esc_attr(iso)}">{esc(label)}</time>. '
+            f'Last updated: <time datetime="{esc_attr(iso)}">{esc(label)}</time>.</p>'
+        )
+        footer_date = dated
     return f"""<!DOCTYPE html>
 <html lang="en" translate="no">
 <head>
@@ -217,22 +260,20 @@ def page(
 <link rel="icon" href="{icon_prefix}favicon.svg" type="image/svg+xml">{alternate_block}
 </head>
 <body>
-<!-- {DRAFT_MARK} -->
-<!-- Generated by scripts/build_site.py. Edit the sources under scripts/ and run the generator again. -->{locale_block}
+{draft_comment}<!-- Generated by scripts/build_site.py. Edit the sources under scripts/ and run the generator again. -->{locale_block}
 <a class="skip" href="#content">Skip to content</a>
 <header class="wrap">
 <p class="brand"><a href="{brand_href}">Bridge Kids</a></p>
-<p class="draft">{esc(DRAFT_MARK)}. This page is not a final legal document, and it is not in force.</p>
-{header_nav}
+{draft_banner}{header_nav}
 </header>
 <main class="wrap" id="content">{pending_block}
 <h1>{esc(heading)}</h1>
-<p>Draft dated <time datetime="{UPDATED}">{esc(UPDATED_LABEL)}</time>. The English text is the source draft.</p>
+{dated}
 {body.strip()}
 </main>
 <footer class="wrap">
 <p>Bridge Kids is published by Gabriel John Fordan, an individual developer.</p>
-<p><time datetime="{UPDATED}">{esc(UPDATED_LABEL)}</time>. {esc(DRAFT_MARK)}. This is not a final legal document.</p>
+{footer_date}
 </footer>
 </body>
 </html>
@@ -242,22 +283,28 @@ def page(
 def locale_index_body() -> str:
     return f"""
 <p>Privacy policy, children's privacy notice, support, and terms for Bridge Kids, an app for children aged 3–10 on iPhone and iPad.</p>
-<p>Bridge Kids is published by Gabriel John Fordan, an individual developer. The app is free. It is designed not to collect personal information, not to use accounts or telemetry, and not to send a child's voice off the device. Speech recognition stays on the device. Profiles are excluded from iOS backup.</p>
+<p>Bridge Kids is published by Gabriel John Fordan, an individual developer. The app is free. It is designed not to collect personal information and not to use accounts or telemetry. It does not use the microphone, and it does not connect to the internet. Profiles and progress stay on the device and are excluded from iOS backup.</p>
 <h2>Documents</h2>
 {document_list("")}
 <p>Email: <a href="{CONTACT_MAILTO}">{esc(CONTACT_ADDRESS)}</a>. The postal address, if one is required, is still a placeholder on the <a href="support.html">support page</a>.</p>
 """
 
 
+def release_document_sections() -> str:
+    rows = release_rows()
+    blocks: list[str] = []
+    for code, native, _english in rows:
+        heading = "Documents" if len(rows) == 1 else f"{native} documents"
+        blocks.append(f"<h2>{esc(heading)}</h2>\n{document_list(code + '/')}")
+    return "\n".join(blocks)
+
+
 def root_index_body() -> str:
     return f"""
 <p>Privacy policy, children's privacy notice, support, and terms for Bridge Kids, an app for children aged 3–10 on iPhone and iPad.</p>
-<p>Choose a language. This release links English and Japanese only. English is the only text that has been written. The Japanese pages repeat that English text with a banner that says a human translation is still waiting. Those pages are not translations, and a browser translation is not one either. The other parent-area languages stay in the repository for a later review and are not linked here.</p>
+<p>Choose a language. The app's parent area is in English and Japanese.</p>
 {language_nav("index.html", None, True)}
-<h2>Japanese documents</h2>
-{document_list("ja/")}
-<h2>English documents</h2>
-{document_list("en/")}
+{release_document_sections()}
 <p>Bridge Kids is published by Gabriel John Fordan, an individual developer. The app is free. Email: <a href="{CONTACT_MAILTO}">{esc(CONTACT_ADDRESS)}</a>. The postal address, if one is required, is still a placeholder.</p>
 """
 
@@ -266,14 +313,18 @@ def not_found_body() -> str:
     return f"""
 <p>That address is not a page on this site. The links below stay inside the site.</p>
 {language_nav("index.html", None, True)}
-<h2>Japanese documents</h2>
-{document_list("ja/")}
-<h2>English documents</h2>
-{document_list("en/")}
+{release_document_sections()}
 """
 
 
-def render_locale(code: str, native: str, english: str, page_id: str, heading: str) -> str:
+def render_locale(
+    code: str,
+    native: str,
+    english: str,
+    page_id: str,
+    heading: str,
+    published: tuple[str, str] | None,
+) -> str:
     page_file = f"{page_id}.html"
     if page_id == "index":
         body = locale_index_body()
@@ -282,10 +333,12 @@ def render_locale(code: str, native: str, english: str, page_id: str, heading: s
     pending = ""
     locale_note = ""
     if code != "en":
-        pending = pending_banner(code, native)
+        pending = pending_banner(native)
         locale_note = (
-            f"<!-- Locale folder: {code}. The visible text is English until a human "
-            f"translation is reviewed. When you translate this file, set the html lang "
+            f"<!-- Locale folder: {code}. The visible text is the English draft. "
+            f"A copy in this language is an AI draft by the product lead and is taken "
+            f"to ai_verified by the language reviewer. There is no separate human "
+            f"translator. When that copy replaces this text, set the html lang "
             f"attribute to {code}. -->"
         )
     header = language_nav(page_file, code, False) + "\n" + document_nav(page_id)
@@ -301,10 +354,11 @@ def render_locale(code: str, native: str, english: str, page_id: str, heading: s
         pending=pending,
         alternates=alternate_links(page_file),
         locale_note=locale_note,
+        published=published,
     )
 
 
-def render_root() -> str:
+def render_root(published: tuple[str, str] | None) -> str:
     return page(
         title=TITLES["index"],
         description=PAGE_DESCRIPTIONS["index"],
@@ -317,10 +371,11 @@ def render_root() -> str:
         pending="",
         alternates="",
         locale_note="",
+        published=published,
     )
 
 
-def render_404() -> str:
+def render_404(published: tuple[str, str] | None) -> str:
     return page(
         title=TITLES["404"],
         description=PAGE_DESCRIPTIONS["404"],
@@ -333,18 +388,20 @@ def render_404() -> str:
         pending="",
         alternates="",
         locale_note="",
+        published=published,
     )
 
 
 def render_all() -> dict[str, str]:
+    published = current_publication_stamp()
     files = {
-        "index.html": render_root(),
-        "404.html": render_404(),
+        "index.html": render_root(published),
+        "404.html": render_404(published),
     }
     for code, native, english in LOCALES:
         for page_id, heading in PAGES:
             files[f"{code}/{page_id}.html"] = render_locale(
-                code, native, english, page_id, heading
+                code, native, english, page_id, heading, published
             )
     return files
 
