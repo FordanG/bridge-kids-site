@@ -316,8 +316,19 @@ def drafts_are_required(root: Path, launch: set[str]) -> bool:
     return publication_stamp(root / "release" / "checklist.json", sorted(launch)) is None
 
 
-def required_phrase_errors(relative: str, text: str, launch: set[str]) -> list[str]:
-    """Phrases for one page. Excluded locales and unknown locale tables are skipped."""
+def required_phrase_errors(
+    relative: str,
+    text: str,
+    launch: set[str],
+    *,
+    drafts_required: bool = True,
+) -> list[str]:
+    """Phrases for one page. Excluded locales and unknown locale tables are skipped.
+
+    Postal placeholder, TODO, and the retention-confirmation comment are
+    required only while the publication stamp is absent. The contact
+    address and the visible retention sentence stay required after it.
+    """
     parts = Path(relative).parts
     page_id = Path(relative).stem
     if len(parts) == 2 and parts[0] in LOCALE_CODES:
@@ -342,10 +353,11 @@ def required_phrase_errors(relative: str, text: str, launch: set[str]) -> list[s
     if phrase_locale != "en":
         return errors
     if in_locale_folder and page_id in LEGAL_PAGE_IDS:
-        for token in (POSTAL_ADDRESS, "TODO", CONTACT_MAILTO, CONTACT_ADDRESS):
+        draft_tokens = (POSTAL_ADDRESS, "TODO") if drafts_required else ()
+        for token in (*draft_tokens, CONTACT_MAILTO, CONTACT_ADDRESS):
             if token not in text:
                 errors.append(f"{relative}: missing {token}")
-        if f"<!-- {EMAIL_RETENTION_NOTE} -->" not in text:
+        if drafts_required and f"<!-- {EMAIL_RETENTION_NOTE} -->" not in text:
             errors.append(f"{relative}: missing the email-retention confirmation comment")
     if in_locale_folder and page_id == "privacy":
         if "do not use them for tracking" not in text:
@@ -398,7 +410,11 @@ def check_contract(root: Path) -> list[str]:
         for phrase in FORBIDDEN_PHRASES:
             if phrase in lowered:
                 errors.append(f"{relative}: contains {phrase!r}")
-        errors.extend(required_phrase_errors(relative, text, launch))
+        errors.extend(
+            required_phrase_errors(
+                relative, text, launch, drafts_required=drafts_required
+            )
+        )
     return errors
 
 
@@ -842,8 +858,166 @@ def self_test() -> list[str]:
         failures.append(f"an excluded locale should skip phrase checks, got {held}")
     if any("GitHub Pages" in item for item in en_errors):
         failures.append("en privacy should not require a guessed GitHub Pages host")
+    failures.extend(test_published_drops_draft_placeholder_requirements())
+    failures.extend(test_published_body_drops_draft_notices())
     failures.extend(test_r2_markers_replaced_still_blocks_release_words())
     failures.extend(test_r2_clean_pages_pass_release_word_scan())
+    return failures
+
+
+def _published_legal_page() -> str:
+    return (
+        "<!DOCTYPE html><html><body>"
+        "<p>children aged 3–10</p>"
+        f"<p>{EMAIL_RETENTION_LINE}</p>"
+        "<p>IP address. user agent. The publisher does not receive the logs and we do not use them for tracking.</p>"
+        f'<p><a href="{CONTACT_MAILTO}">{CONTACT_ADDRESS}</a></p>'
+        "</body></html>"
+    )
+
+
+def test_published_drops_draft_placeholder_requirements() -> list[str]:
+    """After Final Review OK, draft markers are not required; contact and retention are."""
+    failures: list[str] = []
+    ready = _published_legal_page()
+    draft_errors = required_phrase_errors("en/terms.html", ready, {"en"}, drafts_required=True)
+    for token in (POSTAL_ADDRESS, "TODO", "email-retention confirmation"):
+        if not any(token in item for item in draft_errors):
+            failures.append(f"draft mode should still require {token}, got {draft_errors}")
+    published_errors = required_phrase_errors(
+        "en/terms.html", ready, {"en"}, drafts_required=False
+    )
+    for token in (POSTAL_ADDRESS, "TODO", "email-retention confirmation"):
+        if any(token in item for item in published_errors):
+            failures.append(f"publication should not require {token}, got {published_errors}")
+    if published_errors:
+        failures.append(f"a published legal page with contact and retention should pass, got {published_errors}")
+    bare = "<html><body><p>children aged 3–10</p></body></html>"
+    still = required_phrase_errors("en/privacy.html", bare, {"en"}, drafts_required=False)
+    for token in (CONTACT_MAILTO, CONTACT_ADDRESS, EMAIL_RETENTION_LINE, "host-log disclosure"):
+        if not any(token in item for item in still):
+            failures.append(f"publication should still require {token!r}, got {still}")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "review.json").write_text(
+            json.dumps({"version": 1, "release_languages": ["en"], "records": []}) + "\n",
+            encoding="utf-8",
+        )
+        checklist = root / "release" / "checklist.json"
+        checklist.parent.mkdir()
+        checklist.write_text(
+            json.dumps(
+                {
+                    "site": {
+                        "final_review_ok": {
+                            "by": "human:gabriel",
+                            "date": "2026-11-01",
+                            "languages": ["en"],
+                        },
+                        "effective_date": "2026-11-01",
+                        "self_verified": [],
+                    }
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        index = "<!DOCTYPE html><html><body><p>children aged 3–10</p></body></html>"
+        (root / "index.html").write_text(index, encoding="utf-8")
+        (root / "404.html").write_text(
+            "<!DOCTYPE html><html><body><p>Missing.</p></body></html>",
+            encoding="utf-8",
+        )
+        pending = (
+            "<!DOCTYPE html><html><body><p>TRANSLATION PENDING. "
+            "children aged 3–10</p></body></html>"
+        )
+        for code in LOCALE_CODES:
+            folder = root / code
+            folder.mkdir()
+            for page_id in PAGE_IDS:
+                text = ready if code == "en" and page_id != "index" else (
+                    index if code == "en" else pending
+                )
+                if code == "en" and page_id == "index":
+                    text = index
+                (folder / f"{page_id}.html").write_text(text, encoding="utf-8")
+        if drafts_are_required(root, {"en"}):
+            failures.append("a signed checklist should clear the draft-placeholder requirement")
+        errors = check_contract(root)
+        blocked = [
+            item
+            for item in errors
+            if "POSTAL_ADDRESS" in item or "missing TODO" in item or "email-retention confirmation" in item
+        ]
+        if blocked:
+            failures.append(f"published contract should not require draft placeholders, got {blocked}")
+        if errors:
+            failures.append(f"published contract fixture should pass, got {errors}")
+        terms = root / "en" / "terms.html"
+        terms.write_text(terms.read_text(encoding="utf-8").replace(CONTACT_MAILTO, "mailto:missing@example.com"), encoding="utf-8")
+        # The address text is still the approved address inside the old mailto. Remove both.
+        terms.write_text(
+            "<!DOCTYPE html><html><body><p>children aged 3–10</p>"
+            f"<p>{EMAIL_RETENTION_LINE}</p></body></html>",
+            encoding="utf-8",
+        )
+        missing_contact = check_contract(root)
+        if not any("en/terms.html" in item and CONTACT_MAILTO in item for item in missing_contact):
+            failures.append(f"publication should still require the contact link, got {missing_contact}")
+        if not any("en/terms.html" in item and CONTACT_ADDRESS in item for item in missing_contact):
+            failures.append(f"publication should still require the contact address, got {missing_contact}")
+    return failures
+
+
+def test_published_body_drops_draft_notices() -> list[str]:
+    """Published pages drop the body sentences that say the document is not in force."""
+    import build_site
+
+    failures: list[str] = []
+    common = dict(
+        title="T",
+        description="Draft description.",
+        heading="H",
+        css_href="../css/site.css",
+        icon_prefix="../",
+        brand_href="index.html",
+        header_nav="",
+        pending="",
+        alternates="",
+        locale_note="",
+    )
+    cases = (
+        ("children", "Please read it as a draft"),
+        ("terms", "They are not in force, they have not had legal review"),
+    )
+    for page_id, sentence in cases:
+        draft = build_site.page(
+            **common,
+            body=build_site.PAGE_BODIES[page_id],
+            published=None,
+        )
+        live = build_site.page(
+            **common,
+            body=build_site.PAGE_BODIES[page_id],
+            published=("2026-11-01", "1 November 2026"),
+        )
+        if sentence not in draft:
+            failures.append(f"draft {page_id} should keep {sentence!r}")
+        if sentence in live:
+            failures.append(f"published {page_id} should omit {sentence!r}")
+        if "Effective date:" not in live:
+            failures.append(f"published {page_id} should show the effective date")
+    children = build_site.page(
+        **common,
+        body=build_site.PAGE_BODIES["children"],
+        published=("2026-11-01", "1 November 2026"),
+    )
+    if "not in force" in children:
+        failures.append("published children page should not disclaim that it is not in force")
+    if "Ages 5" in build_site.PAGE_BODIES["children"] or "Ages 5" in children:
+        failures.append("the children's notice should not name an Apple age band")
     return failures
 
 

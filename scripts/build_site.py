@@ -10,8 +10,9 @@ translator. This script does not translate.
 
 Draft banners and the "Draft dated" line stay until release/checklist.json
 has both Gabriel's Final Review OK and site.effective_date. When both
-are set, this script removes the banners and writes that date as the
-effective date and the last-updated date.
+are set, this script removes the banners, drops the body paragraphs that
+say the document is not in force, and writes that date as the effective
+date and the last-updated date.
 
 Usage:
   python3 scripts/build_site.py
@@ -22,6 +23,7 @@ from __future__ import annotations
 
 import html
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -203,6 +205,27 @@ def pending_banner(native: str) -> str:
     )
 
 
+# Body paragraphs that say this document has no legal effect. Draft pages
+# keep them. A published page must not show them next to the effective date.
+_DRAFT_DISCLAIMERS = (
+    "Please read it as a draft. It has not had legal review, and it is not in force.",
+    (
+        "These are draft terms for the Bridge Kids app. They are not in force, "
+        "they have not had legal review, and they are not legal advice. "
+        "The English text is the source. A browser translation is not a set of terms."
+    ),
+)
+
+
+def omit_published_draft_notices(body: str, published: tuple[str, str] | None) -> str:
+    """Drop the body-level 'not in force' notices once the publication stamp is set."""
+    if published is None:
+        return body
+    for sentence in _DRAFT_DISCLAIMERS:
+        body = re.sub(r"[ \t]*<p>" + re.escape(sentence) + r"</p>\n?", "", body)
+    return body
+
+
 def public_description(description: str, published: tuple[str, str] | None) -> str:
     """Drop the release-gated "Draft " meta prefix once the publication stamp is set."""
     if published is not None and description.startswith("Draft "):
@@ -226,6 +249,7 @@ def page(
     locale_note: str,
     published: tuple[str, str] | None = None,
 ) -> str:
+    body = omit_published_draft_notices(body, published)
     description = public_description(description, published)
     alternate_block = f"\n{alternates}" if alternates else ""
     locale_block = f"\n{locale_note}" if locale_note else ""
