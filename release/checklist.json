@@ -1,5 +1,7 @@
 {
   "site": {
-    "final_review_ok": null
+    "final_review_ok": null,
+    "effective_date": null,
+    "self_verified": []
   }
 }
