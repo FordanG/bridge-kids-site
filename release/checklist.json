@@ -2,6 +2,33 @@
   "site": {
     "final_review_ok": null,
     "effective_date": null,
-    "self_verified": []
+    "self_verified": [],
+    "self_verified_blocks": [
+      "ja/privacy.html#english-prevails",
+      "ja/privacy.html#short",
+      "ja/privacy.html#app",
+      "ja/privacy.html#not-collected",
+      "ja/privacy.html#retention",
+      "ja/privacy.html#diagnostics",
+      "ja/privacy.html#website",
+      "ja/children.html#notice",
+      "ja/children.html#operator",
+      "ja/children.html#identifiers",
+      "ja/children.html#parents",
+      "ja/children.html#retention",
+      "ja/children.html#deletion",
+      "ja/children.html#stores",
+      "ja/support.html#no-account",
+      "ja/support.html#gate",
+      "ja/support.html#delete",
+      "ja/support.html#what-to-write",
+      "ja/terms.html#english-prevails",
+      "ja/terms.html#draft",
+      "ja/terms.html#who",
+      "ja/terms.html#agreement",
+      "ja/terms.html#parents",
+      "ja/terms.html#law",
+      "ja/terms.html#changes"
+    ]
   }
 }

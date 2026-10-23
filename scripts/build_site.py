@@ -11,7 +11,9 @@ translator. This script does not translate.
 Draft banners and the "Draft dated" line stay until release/checklist.json
 has both Gabriel's Final Review OK and site.effective_date. When both
 are set, this script removes the banners and writes that date as the
-effective date and the last-updated date.
+effective date and the last-updated date on released languages. A
+language that is still in the repo but not in release_languages keeps
+its draft date line.
 
 Usage:
   python3 scripts/build_site.py
@@ -22,6 +24,7 @@ from __future__ import annotations
 
 import html
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -78,6 +81,26 @@ def esc(value: str) -> str:
 
 def esc_attr(value: str) -> str:
     return html.escape(value, quote=True)
+
+
+def mark_ja_review_blocks(body: str) -> str:
+    """Add data-review-block from each section id. Visible text stays the same."""
+    return re.sub(
+        r'<section id="([^"]+)">',
+        lambda match: (
+            f'<section id="{match.group(1)}" data-review-block="{match.group(1)}">'
+        ),
+        body,
+    )
+
+
+def mark_english_prevails(notice: str) -> str:
+    """The prevails notice is not the children's section id "notice"."""
+    return notice.replace(
+        '<div class="pending">',
+        '<div class="pending" data-review-block="english-prevails">',
+        1,
+    )
 
 
 def release_codes() -> list[str]:
@@ -235,7 +258,11 @@ def page(
     published: tuple[str, str] | None = None,
     lang: str = "en",
     notice: str = "",
+    released: bool = True,
 ) -> str:
+    # A held locale stays on the draft date line after Final Review OK.
+    if not released:
+        published = None
     description = public_description(description, published)
     alternate_block = f"\n{alternates}" if alternates else ""
     locale_block = f"\n{locale_note}" if locale_note else ""
@@ -371,6 +398,7 @@ def render_locale(
     is_ja = code == "ja"
     if is_ja:
         body = ja.INDEX_BODY_JA if page_id == "index" else ja.PAGE_BODIES_JA[page_id]
+        body = mark_ja_review_blocks(body)
     elif page_id == "index":
         body = locale_index_body()
     else:
@@ -401,7 +429,12 @@ def render_locale(
         locale_note=locale_note,
         published=published,
         lang="ja" if is_ja else "en",
-        notice=ja.PREVAILS_NOTICE_HTML if is_ja and page_id in ja.PREVAILS_NOTICE_PAGES else "",
+        notice=(
+            mark_english_prevails(ja.PREVAILS_NOTICE_HTML)
+            if is_ja and page_id in ja.PREVAILS_NOTICE_PAGES
+            else ""
+        ),
+        released=code in set(release_codes()),
     )
 
 

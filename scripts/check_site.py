@@ -30,7 +30,6 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from content_ja import RELEASE_BANNED_PHRASES_JA  # noqa: E402
 from site_map import (  # noqa: E402
     CONTACT_ADDRESS,
     CONTACT_MAILTO,
@@ -398,6 +397,12 @@ def check_contract(root: Path) -> list[str]:
                 errors.append(f"{relative}: missing the draft mark in an HTML comment")
             if f"<!-- {DRAFT_MARK} -->" not in text:
                 errors.append(f"{relative}: draft mark must appear as an HTML comment")
+        elif locale_of(relative) not in launch and locale_of(relative) is not None:
+            if "Effective date:" in text or "施行日：" in text:
+                errors.append(f"{relative}: a held language must not show the effective date")
+            draft_line = "付の下書きです" if locale_of(relative) == "ja" else "Draft dated"
+            if draft_line not in text:
+                errors.append(f"{relative}: a held language must keep the draft date line")
         elif DRAFT_MARK in text:
             errors.append(f"{relative}: draft mark must be removed once the effective date is set")
         errors.extend(pending_banner_errors(relative, text))
@@ -425,6 +430,14 @@ def check_tree(root: Path, *, contract: bool) -> list[str]:
         errors.extend(check_contract(root))
     return errors
 
+
+# Japanese counterparts of draft, placeholder, and not finished. TODO stays Latin.
+# These phrases live here so scripts/content_ja.py can stay the product lead's text.
+RELEASE_BANNED_PHRASES_JA: tuple[str, ...] = (
+    "下書き",
+    "仮の表示",
+    "まだ確定していません",
+)
 
 # Word matches, not raw substrings: "today" is not a TODO.
 RELEASE_TEXT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -498,10 +511,36 @@ def release_surface(html: str) -> tuple[str, list[str]]:
     return surface, parser.descriptions
 
 
+def release_scan_paths(root: Path) -> list[Path]:
+    """Released languages, plus the root pages. A held language's draft line stays."""
+    review = root / "review.json"
+    languages: list[str] | None = None
+    if review.is_file():
+        try:
+            data = json.loads(review.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            data = None
+        raw = data.get("release_languages") if isinstance(data, dict) else None
+        if isinstance(raw, list) and raw and all(isinstance(code, str) for code in raw):
+            languages = raw
+    if languages is None:
+        return html_files(root)
+    paths: list[Path] = []
+    for name in ("index.html", "404.html"):
+        candidate = root / name
+        if candidate.is_file():
+            paths.append(candidate)
+    for code in languages:
+        folder = root / code
+        if folder.is_dir():
+            paths.extend(sorted(folder.glob("*.html")))
+    return paths
+
+
 def release_text_errors(root: Path) -> list[str]:
     """Case-insensitive draft words in visible text, title, and meta description."""
     errors: list[str] = []
-    for path in html_files(root):
+    for path in release_scan_paths(root):
         html = path.read_text(encoding="utf-8")
         surface, descriptions = release_surface(html)
         label = path.relative_to(root).as_posix()
@@ -596,6 +635,23 @@ def _refresh_simulated_review(dest: Path) -> None:
             record["reviewed_at"] = "2026-10-23"
             record["needs_native_check"] = False
             record["self_verified"] = False
+    listed_blocks: list[str] = []
+    for block in data.get("self_verified_blocks") or []:
+        if not isinstance(block, dict):
+            continue
+        relative = block.get("path")
+        block_id = block.get("block_id")
+        if not isinstance(relative, str) or not isinstance(block_id, str):
+            continue
+        html_path = dest / relative
+        if html_path.is_file():
+            refreshed = review_check.block_source_hash(
+                html_path.read_text(encoding="utf-8"),
+                block_id,
+            )
+            if refreshed is not None:
+                block["source_hash"] = refreshed
+        listed_blocks.append(f"{relative}#{block_id}")
     review_file.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     languages = data.get("release_languages")
     checklist = dest / "release" / "checklist.json"
@@ -611,6 +667,7 @@ def _refresh_simulated_review(dest: Path) -> None:
                     },
                     "effective_date": "2026-10-23",
                     "self_verified": [],
+                    "self_verified_blocks": listed_blocks,
                 }
             },
             indent=2,
@@ -665,6 +722,95 @@ def test_ja_release_banned_phrases() -> list[str]:
             errors = release_text_errors(root)
             if not any(phrase in item for item in errors):
                 failures.append(f"release scan should report {phrase!r}, got {errors}")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        held = root / "ja"
+        held.mkdir()
+        (held / "privacy.html").write_text(
+            "<!DOCTYPE html><html lang=\"ja\"><head><title>確認</title></head>"
+            "<body><p>2026年10月23日付の下書きです。</p></body></html>",
+            encoding="utf-8",
+        )
+        (root / "review.json").write_text(
+            json.dumps({"version": 1, "release_languages": ["en"], "records": []}),
+            encoding="utf-8",
+        )
+        if release_text_errors(root):
+            failures.append("a held language's draft date line should not fail --release")
+        data = json.loads((root / "review.json").read_text(encoding="utf-8"))
+        data["release_languages"] = ["en", "ja"]
+        (root / "review.json").write_text(json.dumps(data), encoding="utf-8")
+        released = release_text_errors(root)
+        if not any("下書き" in item for item in released):
+            failures.append(f"ja draft wording should fail once ja is released, got {released}")
+    return failures
+
+
+def test_ja_dates() -> list[str]:
+    """Japanese dates are unpadded, and a held language keeps the draft date line."""
+    failures: list[str] = []
+    import build_site
+    import content_ja as content
+
+    if content.ja_date_label("2026-01-05") != "2026年1月5日":
+        failures.append(
+            f"2026-01-05 should be 2026年1月5日, got {content.ja_date_label('2026-01-05')}"
+        )
+    if content.ja_date_label("2026-11-01") != "2026年11月1日":
+        failures.append(
+            f"2026-11-01 should be 2026年11月1日, got {content.ja_date_label('2026-11-01')}"
+        )
+    if content.ja_date_label("2026-10-23") != "2026年10月23日":
+        failures.append(
+            f"2026-10-23 should keep both digits, got {content.ja_date_label('2026-10-23')}"
+        )
+    common = dict(
+        title="T",
+        description="D",
+        heading="H",
+        body="<p>本文</p>",
+        css_href="../css/site.css",
+        icon_prefix="../",
+        brand_href="index.html",
+        header_nav="",
+        pending="",
+        alternates="",
+        locale_note="",
+    )
+    published = build_site.page(
+        **common,
+        published=("2026-01-05", "5 January 2026"),
+        lang="ja",
+        released=True,
+    )
+    expected = (
+        "施行日：<time datetime=\"2026-01-05\">2026年1月5日</time>"
+        "　最終更新日：<time datetime=\"2026-01-05\">2026年1月5日</time>"
+    )
+    if expected not in published:
+        failures.append("published ja dates should be unpadded and separated by a full-width space")
+    if "2026年01月" in published or "月05日" in published:
+        failures.append("published ja dates must not zero-pad the month or day")
+    english = build_site.page(
+        **common,
+        published=("2026-01-05", "5 January 2026"),
+        lang="en",
+        released=True,
+    )
+    if "Effective date:" not in english or "5 January 2026" not in english:
+        failures.append("the English effective date should stay in the English format")
+    if "年" in english:
+        failures.append("the English page should not use the Japanese date format")
+    held = build_site.page(
+        **common,
+        published=("2026-11-01", "1 November 2026"),
+        lang="ja",
+        released=False,
+    )
+    if "付の下書きです" not in held:
+        failures.append("a held language should keep the draft date line after Final Review OK")
+    if "施行日" in held:
+        failures.append("a held language should not show the effective date")
     return failures
 
 
@@ -900,8 +1046,12 @@ def self_test() -> list[str]:
     if any("GitHub Pages" in item for item in en_errors):
         failures.append("en privacy should not require a guessed GitHub Pages host")
     failures.extend(test_ja_release_banned_phrases())
+    failures.extend(test_ja_dates())
     failures.extend(test_r2_markers_replaced_still_blocks_release_words())
     failures.extend(test_r2_clean_pages_pass_release_word_scan())
+    import review_check
+
+    failures.extend(review_check.fixture_self_verified_blocks())
     return failures
 
 
@@ -919,6 +1069,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {failure}", file=sys.stderr)
         return 1
     errors = check_tree(ROOT, contract=True)
+    import review_check
+
+    review_data, review_errors = review_check.load_review(ROOT / "review.json")
+    errors.extend(review_errors)
+    if isinstance(review_data, dict):
+        errors.extend(
+            review_check.self_verified_block_errors(
+                ROOT,
+                review_data,
+                release=release,
+                allow_ja_self_verified=review_data.get("allow_ja_self_verified") is True,
+                release_languages=sorted(launch_locales(ROOT)),
+            )
+        )
     if release:
         errors.extend(release_text_errors(ROOT))
     if errors:
